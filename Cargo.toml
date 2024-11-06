@@ -1,9 +1,9 @@
 [package]
-name = "learnstuff"
+name = "practicestuff"
 version = "0.1.0"
 description = "Simple CLI trainer for improving calculation and memorisation skills"
 authors = ["Bartłomiej Jaszczak"]
-repository = "https://gitlab.com/bartekjaszczak/learnstuff"
+repository = "https://gitlab.com/bartekjaszczak/practicestuff"
 readme = "README.md"
 license = "MIT"
 keywords = ["learning", "math", "doomsday", "memory"]
