@@ -1,7 +1,13 @@
 [package]
 name = "learnstuff"
 version = "0.1.0"
+description = "Simple CLI trainer for improving calculation and memorisation skills"
+authors = ["Bartłomiej Jaszczak"]
 repository = "https://gitlab.com/bartekjaszczak/learnstuff"
+readme = "README.md"
+license = "MIT"
+keywords = ["learning", "math", "doomsday", "memory"]
+categories = ["command-line-utilities", "mathematics"]
 edition = "2021"
 
 [dependencies]
