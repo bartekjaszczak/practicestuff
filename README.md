@@ -4,8 +4,8 @@ CLI app to help practising skills by presenting questions and expecting a correc
 
 Initial list of skills:
 
-- powers of 2
-- multiplication table
+- powers of a digit
+- multiplication table (times table)
 - doomsday algorithm
 
 ## Assumptions
@@ -26,9 +26,10 @@ Initial list of skills:
 
 ## Specific options
 
-### Powers of 2
+### Powers
 
-- Option to set upper and lower power boundary (default: 2^1 to 2^16)
+- Option to set power base (default: 2)
+- Option to set upper and lower power boundary (default: 1 to 16)
 
 ### Multiplication table
 

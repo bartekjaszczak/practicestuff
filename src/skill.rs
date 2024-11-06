@@ -1,3 +1,3 @@
-mod power_of_two;
-mod multiplicaton_table;
-mod doomsday_algorithm;
+pub mod powers;
+pub mod times_table;
+pub mod doomsday_algorithm;
