@@ -1,3 +1,8 @@
+use std::env;
+use practicestuff::{Application, Config};
+
 fn main() {
-    println!("Hello, world!");
+    let args: Vec<_> = env::args().collect();
+    let config = Config::parse_args(&args);
+    Application::run(&config);
 }
