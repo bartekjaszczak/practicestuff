@@ -2,6 +2,7 @@ use crate::application::{self, Application};
 use crate::skill::doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
 use crate::skill::powers::CMD_POWERS;
 use crate::skill::times_table::CMD_TIMES_TABLE;
+use crate::skill::{self, Skill};
 
 use std::cmp;
 
@@ -14,6 +15,7 @@ const DEFAULT_OPTION_BEHAVIOUR_ON_ERROR: BehaviourOnError = BehaviourOnError::Sh
 #[derive(Debug)]
 pub struct Config {
     general_options: GeneralOptions,
+    skill: Box<dyn Skill>,
 }
 
 impl Config {
@@ -21,16 +23,19 @@ impl Config {
         if args.len() < 2 {
             return Err(build_err_message(None));
         }
-
         let (general_options, command, args) = Config::split_args(&args[1..]);
 
         let general_options = GeneralOptions::build(general_options)?;
+        let Some(command) = command else {
+            return Err(build_err_message(Some("missing command".to_string())));
+        };
 
-        // 2) Determine specific mode/command
+        let skill = skill::build_skill(&command, args)?;
 
-        // 3) Parse command arguments
-
-        Ok(Config { general_options })
+        Ok(Config {
+            general_options,
+            skill,
+        })
     }
 
     fn split_args(args: &[String]) -> (&[String], Option<String>, &[String]) {

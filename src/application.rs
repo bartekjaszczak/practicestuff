@@ -20,6 +20,10 @@ impl Application {
     }
 
     fn print_help() {
+        todo!()
+    }
 
+    fn print_version() {
+        todo!()
     }
 }
