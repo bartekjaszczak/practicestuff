@@ -1,1 +1,1 @@
-pub(crate) const CMD_POWERS: &str = "powers";
+pub const CMD_POWERS: &str = "powers";
