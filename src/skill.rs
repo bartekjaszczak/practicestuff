@@ -20,7 +20,7 @@ trait SkillBase {
 pub trait Skill: SkillBase + fmt::Debug {}
 impl<T: SkillBase + fmt::Debug> Skill for T {}
 
-pub fn build_skill(command: &str, args: &[String]) -> Result<Box<dyn Skill>, String> {
+pub fn build(command: &str, args: &[String]) -> Result<Box<dyn Skill>, String> {
     match command {
         CMD_POWERS => Ok(Box::new(Powers::build(args)?)),
         CMD_TIMES_TABLE => todo!(),

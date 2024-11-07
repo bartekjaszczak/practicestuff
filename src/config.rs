@@ -18,7 +18,7 @@ type RequiresValue = bool;
 #[derive(Debug)]
 pub struct Config {
     general_options: GeneralOptions,
-    skill: Box<dyn Skill>,
+    skill: Option<Box<dyn Skill>>,
 }
 
 impl Config {
@@ -28,16 +28,25 @@ impl Config {
         }
         let (general_options, command, args) = Config::split_args(&args[1..]);
 
-        let general_options = GeneralOptions::build(general_options)?;
+        let general_options = GeneralOptions::build(general_options);
+        if let Ok(options) = &general_options {
+            if options.show_help || options.show_version {
+                return Ok(Config {
+                    general_options: *options,
+                    skill: None,
+                });
+            }
+        }
+
         let Some(command) = command else {
             return Err(build_err_message(Some("missing command".to_string())));
         };
-
-        let skill = skill::build_skill(&command, args)?;
+        let general_options = general_options?;
+        let skill = skill::build(&command, args)?;
 
         Ok(Config {
             general_options,
-            skill,
+            skill: Some(skill),
         })
     }
 
@@ -56,7 +65,7 @@ impl Config {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum BehaviourOnError {
     NextQuestion,
     ShowCorrect,
@@ -72,7 +81,7 @@ enum OptionType {
     BehaviourOnError,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 struct GeneralOptions {
     show_help: bool,
     show_version: bool,
@@ -133,7 +142,7 @@ impl GeneralOptions {
 
         if expecting_value {
             return Err(build_err_message(Some(format!(
-                "'{last_option}' option requires a value"
+                "'{last_option}' option requires an argument"
             ))));
         }
 
@@ -163,7 +172,7 @@ impl GeneralOptions {
         match value.parse::<u32>() {
             Ok(number) => Ok(number),
             _ => Err(build_err_message(Some(format!(
-                "incorrect option value: '{value}'"
+                "incorrect option argument: '{value}'"
             )))),
         }
     }
@@ -174,7 +183,7 @@ impl GeneralOptions {
             "showcorrect" => Ok(BehaviourOnError::ShowCorrect),
             "repeat" => Ok(BehaviourOnError::Repeat),
             _ => Err(build_err_message(Some(format!(
-                "incorrect option value: '{value}'"
+                "incorrect option argument: '{value}'"
             )))),
         }
     }
