@@ -12,6 +12,9 @@ const DEFAULT_OPTION_NUMBER_OF_QUESTION: u32 = 20;
 const DEFAULT_OPTION_SHOW_LIVE_STATISTICS: bool = true;
 const DEFAULT_OPTION_BEHAVIOUR_ON_ERROR: BehaviourOnError = BehaviourOnError::ShowCorrect;
 
+// type alias
+type RequiresValue = bool;
+
 #[derive(Debug)]
 pub struct Config {
     general_options: GeneralOptions,
@@ -143,7 +146,7 @@ impl GeneralOptions {
         })
     }
 
-    fn parse_option_type(option: &str) -> Result<(OptionType, bool), String> {
+    fn parse_option_type(option: &str) -> Result<(OptionType, RequiresValue), String> {
         match option {
             "--help" | "-h" => Ok((OptionType::ShowHelp, false)),
             "--version" | "-v" => Ok((OptionType::ShowVersion, false)),
