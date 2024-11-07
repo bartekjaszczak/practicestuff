@@ -12,7 +12,6 @@ const DEFAULT_OPTION_NUMBER_OF_QUESTION: u32 = 20;
 const DEFAULT_OPTION_SHOW_LIVE_STATISTICS: bool = true;
 const DEFAULT_OPTION_BEHAVIOUR_ON_ERROR: BehaviourOnError = BehaviourOnError::ShowCorrect;
 
-// type alias
 type RequiresValue = bool;
 
 #[derive(Debug)]

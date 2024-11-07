@@ -12,7 +12,7 @@ impl Application {
     }
 
     pub(crate) fn usage() -> String {
-        format!("Usage: {APP_NAME} [OPTION]... COMMAND [ARGS]...")
+        format!("Usage: {APP_NAME} [option]... command [command_option]...")
     }
 
     pub(crate) fn help_prompt() -> String {
