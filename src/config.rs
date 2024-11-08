@@ -1,4 +1,7 @@
 use crate::application::{self, Application};
+use crate::args::{
+    self, ArgDefinition, ArgKindDefinition, ArgValue, SetFromArg, ValueKindDefinition,
+};
 use crate::skill::doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
 use crate::skill::powers::CMD_POWERS;
 use crate::skill::times_table::CMD_TIMES_TABLE;
@@ -8,43 +11,47 @@ use std::cmp;
 
 const COMMANDS: [&str; 3] = [CMD_POWERS, CMD_TIMES_TABLE, CMD_DOOMSDAY_ALGORITHM];
 
-const DEFAULT_OPTION_NUMBER_OF_QUESTION: u32 = 20;
-const DEFAULT_OPTION_SHOW_LIVE_STATISTICS: bool = true;
-const DEFAULT_OPTION_BEHAVIOUR_ON_ERROR: BehaviourOnError = BehaviourOnError::ShowCorrect;
+const ARG_ID_HELP: &str = "help";
+const ARG_ID_VERSION: &str = "version";
+const ARG_ID_NUMBER_OF_QUESTIONS: &str = "num_of_questions";
+const ARG_ID_DISABLE_LIVE_STATISTICS: &str = "disable_live_stats";
+const ARG_ID_BEHAVIOUR_ON_ERROR: &str = "behaviour_on_err";
 
-type RequiresValue = bool;
+const BEHAVIOUR_ON_ERROR_CONTINUE: &str = "continue";
+const BEHAVIOUR_ON_ERROR_SHOW_CORRECT: &str = "showcorrect";
+const BEHAVIOUR_ON_ERROR_REPEAT: &str = "repeat";
 
 #[derive(Debug)]
 pub struct Config {
-    general_options: GeneralOptions,
+    options: GeneralOptions,
     skill: Option<Box<dyn Skill>>,
 }
 
 impl Config {
     pub fn build(args: &[String]) -> Result<Config, String> {
         if args.len() < 2 {
-            return Err(build_err_message(None));
+            return Err(Self::build_err_message(None));
         }
-        let (general_options, command, args) = Config::split_args(&args[1..]);
+        let (options, command, command_options) = Config::split_args(&args[1..]);
 
-        let general_options = GeneralOptions::build(general_options);
-        if let Ok(options) = &general_options {
+        let options = GeneralOptions::build(options);
+        if let Ok(options) = &options {
             if options.show_help || options.show_version {
-                return Ok(Config {
-                    general_options: *options,
+                return Ok(Self {
+                    options: *options,
                     skill: None,
                 });
             }
         }
 
+        let options = options.map_err(|err| Self::build_err_message(Some(err)))?;
         let Some(command) = command else {
-            return Err(build_err_message(Some("missing command".to_string())));
+            return Err(Self::build_err_message(Some("missing command".to_string())));
         };
-        let general_options = general_options?;
-        let skill = skill::build(&command, args)?;
+        let skill = skill::build(&command, command_options)?;
 
-        Ok(Config {
-            general_options,
+        Ok(Self {
+            options,
             skill: Some(skill),
         })
     }
@@ -62,6 +69,20 @@ impl Config {
         let args_pos = cmp::min(command_pos + 1, args.len());
         (&args[..command_pos], command, &args[args_pos..])
     }
+
+    fn build_err_message(msg: Option<String>) -> String {
+        if let Some(msg) = msg {
+            format!(
+                "{}: {}\n{}\n{}",
+                application::APP_NAME,
+                msg,
+                Application::usage(),
+                Application::help_prompt()
+            )
+        } else {
+            format!("{}\n{}", Application::usage(), Application::help_prompt())
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -71,13 +92,15 @@ enum BehaviourOnError {
     Repeat,
 }
 
-enum OptionType {
-    ShowHelp,
-    ShowVersion,
-
-    NumberOfQuestions,
-    ShowLiveStatistics,
-    BehaviourOnError,
+impl BehaviourOnError {
+    fn from_string(value: &str) -> BehaviourOnError {
+        match value {
+            BEHAVIOUR_ON_ERROR_CONTINUE => BehaviourOnError::NextQuestion,
+            BEHAVIOUR_ON_ERROR_SHOW_CORRECT => BehaviourOnError::ShowCorrect,
+            BEHAVIOUR_ON_ERROR_REPEAT => BehaviourOnError::Repeat,
+            _ => panic!("incorrect value for BehaviourOnError"),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -86,118 +109,91 @@ struct GeneralOptions {
     show_version: bool,
 
     number_of_questions: u32,
-    show_live_statistics: bool,
+    disable_live_statistics: bool,
     behaviour_on_error: BehaviourOnError,
 }
 
 impl GeneralOptions {
-    fn build(args: &[String]) -> Result<GeneralOptions, String> {
-        let mut show_help = false;
-        let mut show_version = false;
-        let mut number_of_questions = DEFAULT_OPTION_NUMBER_OF_QUESTION;
-        let mut show_live_statistics = DEFAULT_OPTION_SHOW_LIVE_STATISTICS;
-        let mut behaviour_on_error = DEFAULT_OPTION_BEHAVIOUR_ON_ERROR;
+    fn build(args: &[String]) -> Result<Self, String> {
+        let arg_definitions = Self::get_arg_definitions();
+        let parsed_args = args::parse_and_validate_arg_list(args, &arg_definitions)?;
 
-        let mut option_type = None;
-        let mut expecting_value = false;
+        let show_help =
+            bool::set_value_from_arg_or_default(ARG_ID_HELP, &parsed_args, &arg_definitions);
+        let show_version =
+            bool::set_value_from_arg_or_default(ARG_ID_VERSION, &parsed_args, &arg_definitions);
+        let number_of_questions = u32::set_value_from_arg_or_default(
+            ARG_ID_NUMBER_OF_QUESTIONS,
+            &parsed_args,
+            &arg_definitions,
+        );
+        let disable_live_statistics = bool::set_value_from_arg_or_default(
+            ARG_ID_DISABLE_LIVE_STATISTICS,
+            &parsed_args,
+            &arg_definitions,
+        );
+        let behaviour_on_error = String::set_value_from_arg_or_default(
+            ARG_ID_BEHAVIOUR_ON_ERROR,
+            &parsed_args,
+            &arg_definitions,
+        );
+        let behaviour_on_error = BehaviourOnError::from_string(&behaviour_on_error);
 
-        let mut last_option = String::new();
-
-        for arg in args {
-            if expecting_value {
-                // Read option value
-                if let Some(option) = option_type {
-                    match option {
-                        OptionType::NumberOfQuestions => {
-                            number_of_questions = GeneralOptions::parse_number_of_questions(arg)?;
-                        }
-                        OptionType::BehaviourOnError => {
-                            behaviour_on_error = GeneralOptions::parse_behaviour_on_error(arg)?;
-                        }
-                        _ => (),
-                    }
-                }
-                expecting_value = false;
-                option_type = None;
-            } else {
-                // Read option
-                last_option.clone_from(arg);
-                let (option, value_required) = GeneralOptions::parse_option_type(arg)?;
-                match option {
-                    OptionType::ShowHelp => {
-                        show_help = true;
-                        break;
-                    }
-                    OptionType::ShowVersion => {
-                        show_version = true;
-                        break;
-                    }
-                    OptionType::ShowLiveStatistics => show_live_statistics = true,
-                    _ => option_type = Some(option),
-                }
-                expecting_value = value_required;
-            }
-        }
-
-        if expecting_value {
-            return Err(build_err_message(Some(format!(
-                "'{last_option}' option requires an argument"
-            ))));
-        }
-
-        Ok(GeneralOptions {
+        Ok(Self {
             show_help,
             show_version,
             number_of_questions,
-            show_live_statistics,
+            disable_live_statistics,
             behaviour_on_error,
         })
     }
 
-    fn parse_option_type(option: &str) -> Result<(OptionType, RequiresValue), String> {
-        match option {
-            "--help" | "-h" => Ok((OptionType::ShowHelp, false)),
-            "--version" | "-v" => Ok((OptionType::ShowVersion, false)),
-            "--number-of-questions" | "-n" => Ok((OptionType::NumberOfQuestions, true)),
-            "--show-live-statistics" | "-s" => Ok((OptionType::ShowLiveStatistics, false)),
-            "--behaviour_on_error" | "-b" => Ok((OptionType::BehaviourOnError, true)),
-            _ => Err(build_err_message(Some(format!(
-                "unrecognised option: '{option}'"
-            )))),
-        }
-    }
-
-    fn parse_number_of_questions(value: &str) -> Result<u32, String> {
-        match value.parse::<u32>() {
-            Ok(number) => Ok(number),
-            _ => Err(build_err_message(Some(format!(
-                "incorrect option argument: '{value}'"
-            )))),
-        }
-    }
-
-    fn parse_behaviour_on_error(value: &str) -> Result<BehaviourOnError, String> {
-        match value {
-            "continue" => Ok(BehaviourOnError::NextQuestion),
-            "showcorrect" => Ok(BehaviourOnError::ShowCorrect),
-            "repeat" => Ok(BehaviourOnError::Repeat),
-            _ => Err(build_err_message(Some(format!(
-                "incorrect option argument: '{value}'"
-            )))),
-        }
-    }
-}
-
-fn build_err_message(msg: Option<String>) -> String {
-    if let Some(msg) = msg {
-        format!(
-            "{}: {}\n{}\n{}",
-            application::APP_NAME,
-            msg,
-            Application::usage(),
-            Application::help_prompt()
-        )
-    } else {
-        format!("{}\n{}", Application::usage(), Application::help_prompt())
+    fn get_arg_definitions() -> Vec<ArgDefinition> {
+        vec![
+            ArgDefinition {
+                id: ARG_ID_HELP.to_string(),
+                short_name: Some('h'),
+                long_name: Some("help".to_string()),
+                kind: ArgKindDefinition::Flag,
+                stop_parsing: true,
+                default_value: ArgValue::Bool(false),
+            },
+            ArgDefinition {
+                id: ARG_ID_VERSION.to_string(),
+                short_name: Some('v'),
+                long_name: Some("version".to_string()),
+                kind: ArgKindDefinition::Flag,
+                stop_parsing: true,
+                default_value: ArgValue::Bool(false),
+            },
+            ArgDefinition {
+                id: ARG_ID_NUMBER_OF_QUESTIONS.to_string(),
+                short_name: Some('n'),
+                long_name: Some("number-of-questions".to_string()),
+                kind: ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt),
+                stop_parsing: false,
+                default_value: ArgValue::UnsignedInt(20),
+            },
+            ArgDefinition {
+                id: ARG_ID_DISABLE_LIVE_STATISTICS.to_string(),
+                short_name: Some('d'),
+                long_name: Some("disable-live-statistics".to_string()),
+                kind: ArgKindDefinition::Flag,
+                stop_parsing: false,
+                default_value: ArgValue::Bool(false),
+            },
+            ArgDefinition {
+                id: ARG_ID_BEHAVIOUR_ON_ERROR.to_string(),
+                short_name: Some('b'),
+                long_name: Some("behaviour-on-error".to_string()),
+                kind: ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(vec![
+                    BEHAVIOUR_ON_ERROR_CONTINUE.to_string(),
+                    BEHAVIOUR_ON_ERROR_SHOW_CORRECT.to_string(),
+                    BEHAVIOUR_ON_ERROR_REPEAT.to_string(),
+                ])),
+                stop_parsing: false,
+                default_value: ArgValue::Str("showcorrect".to_string()),
+            },
+        ]
     }
 }

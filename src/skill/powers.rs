@@ -1,11 +1,13 @@
 use super::{QuestionAndAnswer, SkillBase};
 use crate::application::APP_NAME;
+use crate::args::{self, ArgDefinition, SetFromArg};
 
 pub const CMD_POWERS: &str = "powers";
 
-const DEFAULT_ARGUMENT_BASE: u32 = 2;
-const DEFAULT_ARGUMENT_LOWER_BOUNDARY: u32 = 1;
-const DEFAULT_ARGUMENT_UPPER_BOUNDARY: u32 = 10;
+const ARG_ID_HELP: &str = "help";
+const ARG_ID_BASE: &str = "base";
+const ARG_ID_LOWER_BOUNDARY: &str = "lower_boundary";
+const ARG_ID_UPPER_BOUNDARY: &str = "upper_boundary";
 
 type RequiresValue = bool;
 
@@ -31,61 +33,31 @@ enum OptionType {
 
 impl Powers {
     pub fn build(args: &[String]) -> Result<Self, String> {
-        let mut show_help = false;
-        let mut base = DEFAULT_ARGUMENT_BASE;
-        let mut lower_boundary = DEFAULT_ARGUMENT_LOWER_BOUNDARY;
-        let mut upper_boundary = DEFAULT_ARGUMENT_UPPER_BOUNDARY;
+        let arg_definitions = Self::get_arg_definitions();
+        let parsed_args = args::parse_and_validate_arg_list(args, &arg_definitions)
+            .map_err(|err| Self::build_err_message(Some(err)))?;
 
-        let mut option_type = None;
-        let mut expecting_value = false;
-
-        let mut last_option = String::new();
-
-        for arg in args {
-            if expecting_value {
-                if let Some(option) = option_type {
-                    match option {
-                        OptionType::Base => {
-                            base = Powers::parse_u32_argument(arg)?;
-                        }
-                        OptionType::LowerBoundary => {
-                            lower_boundary = Powers::parse_u32_argument(arg)?;
-                        }
-                        OptionType::UpperBoundary => {
-                            upper_boundary = Powers::parse_u32_argument(arg)?;
-                        }
-                        _ => (),
-                    }
-                }
-                expecting_value = false;
-                option_type = None;
-            } else {
-                last_option.clone_from(arg);
-                let (option, value_required) = Powers::parse_option_type(arg)?;
-                match option {
-                    OptionType::ShowHelp => {
-                        show_help = true;
-                        break;
-                    }
-                    _ => option_type = Some(option),
-                }
-                expecting_value = value_required;
-            }
-        }
-
-        if expecting_value {
-            return Err(build_err_message(Some(format!(
-                "'{last_option}' option requires an argument"
-            ))));
-        }
+        let show_help =
+            bool::set_value_from_arg_or_default(ARG_ID_HELP, &parsed_args, &arg_definitions);
+        let base = u32::set_value_from_arg_or_default(ARG_ID_BASE, &parsed_args, &arg_definitions);
+        let lower_boundary = u32::set_value_from_arg_or_default(
+            ARG_ID_LOWER_BOUNDARY,
+            &parsed_args,
+            &arg_definitions,
+        );
+        let upper_boundary = u32::set_value_from_arg_or_default(
+            ARG_ID_UPPER_BOUNDARY,
+            &parsed_args,
+            &arg_definitions,
+        );
 
         if lower_boundary > upper_boundary {
-            return Err(build_err_message(Some(
-                "lower boundary cannot be greater than upper boundary".to_string(),
+            return Err(Self::build_err_message(Some(
+                "lower boundary must be less than or equal to upper boundary".to_string(),
             )));
         }
 
-        Ok(Powers {
+        Ok(Self {
             show_help,
             base,
             lower_boundary,
@@ -105,24 +77,55 @@ impl Powers {
         todo!()
     }
 
-    fn parse_option_type(option: &str) -> Result<(OptionType, RequiresValue), String> {
-        match option {
-            "--help" | "-h" => Ok((OptionType::ShowHelp, false)),
-            "--base" | "-b" => Ok((OptionType::Base, true)),
-            "--lower-boundary" | "-l" => Ok((OptionType::LowerBoundary, true)),
-            "--upper-boundary" | "-u" => Ok((OptionType::UpperBoundary, true)),
-            _ => Err(build_err_message(Some(format!(
-                "unrecognised option: '{option}'"
-            )))),
-        }
+    fn get_arg_definitions() -> Vec<ArgDefinition> {
+        vec![
+            ArgDefinition {
+                id: ARG_ID_HELP.to_string(),
+                short_name: Some('h'),
+                long_name: Some("help".to_string()),
+                kind: args::ArgKindDefinition::Flag,
+                stop_parsing: true,
+                default_value: args::ArgValue::Bool(false),
+            },
+            ArgDefinition {
+                id: ARG_ID_BASE.to_string(),
+                short_name: Some('b'),
+                long_name: Some("base".to_string()),
+                kind: args::ArgKindDefinition::Value(args::ValueKindDefinition::UnsignedInt),
+                stop_parsing: false,
+                default_value: args::ArgValue::UnsignedInt(2),
+            },
+            ArgDefinition {
+                id: ARG_ID_LOWER_BOUNDARY.to_string(),
+                short_name: Some('l'),
+                long_name: Some("lower-boundary".to_string()),
+                kind: args::ArgKindDefinition::Value(args::ValueKindDefinition::UnsignedInt),
+                stop_parsing: false,
+                default_value: args::ArgValue::UnsignedInt(1),
+            },
+            ArgDefinition {
+                id: ARG_ID_UPPER_BOUNDARY.to_string(),
+                short_name: Some('u'),
+                long_name: Some("upper-boundary".to_string()),
+                kind: args::ArgKindDefinition::Value(args::ValueKindDefinition::UnsignedInt),
+                stop_parsing: false,
+                default_value: args::ArgValue::UnsignedInt(10),
+            },
+        ]
     }
 
-    fn parse_u32_argument(value: &str) -> Result<u32, String> {
-        match value.parse::<u32>() {
-            Ok(number) => Ok(number),
-            _ => Err(build_err_message(Some(format!(
-                "incorrect option argument: '{value}'"
-            )))),
+    fn build_err_message(msg: Option<String>) -> String {
+        if let Some(msg) = msg {
+            format!(
+                "{}: {}: {}\n{}\n{}",
+                APP_NAME,
+                CMD_POWERS,
+                msg,
+                Self::usage(),
+                Self::help_prompt()
+            )
+        } else {
+            format!("{}\n{}", Self::usage(), Self::help_prompt())
         }
     }
 }
@@ -130,20 +133,5 @@ impl Powers {
 impl SkillBase for Powers {
     fn generate_questions_and_answers(&self, count: u32) -> Vec<QuestionAndAnswer> {
         todo!()
-    }
-}
-
-fn build_err_message(msg: Option<String>) -> String {
-    if let Some(msg) = msg {
-        format!(
-            "{}: {}: {}\n{}\n{}",
-            APP_NAME,
-            CMD_POWERS,
-            msg,
-            Powers::usage(),
-            Powers::help_prompt()
-        )
-    } else {
-        format!("{}\n{}", Powers::usage(), Powers::help_prompt())
     }
 }
