@@ -1,6 +1,6 @@
 # Idea
 
-CLI app to help practising skills by presenting questions and expecting a correct answer.
+CLI app designed to help you practice skills by asking questions and checking your answers.
 
 Initial list of skills:
 

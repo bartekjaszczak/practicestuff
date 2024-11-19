@@ -109,7 +109,7 @@ impl Powers {
                 long_name: Some("upper-boundary".to_string()),
                 kind: args::ArgKindDefinition::Value(args::ValueKindDefinition::UnsignedInt),
                 stop_parsing: false,
-                default_value: args::ArgValue::UnsignedInt(10),
+                default_value: args::ArgValue::UnsignedInt(16),
             },
         ]
     }
