@@ -1107,11 +1107,4 @@ mod tests {
         ];
         assert_eq!(parsed_args, expected_args);
     }
-
-
-    // TODO:
-    // - parse_and_validate_arg_list: [conflicting args, full parse of a few args,
-    //                                 early stop is set for some arg, stop parsing set]
-
-    // fn find_arg<'a>(arg_id: &str, arg_list: &'a [ArgValuePair]) -> Option<&'a ArgValuePair> {
 }
