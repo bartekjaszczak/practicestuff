@@ -12,6 +12,8 @@
 
 use core::panic;
 
+type IsLongName = bool;
+
 #[derive(Clone)]
 pub enum ValueKindDefinition {
     UnsignedInt,
@@ -44,6 +46,15 @@ pub enum ArgValue {
 pub struct ArgValuePair {
     id: String,
     value: ArgValue,
+}
+
+impl ArgValuePair {
+    fn new(id: &str, value: ArgValue) -> Self {
+        Self {
+            id: id.to_string(),
+            value,
+        }
+    }
 }
 
 pub fn parse_and_validate_arg_list(
@@ -107,8 +118,6 @@ fn parse_and_validate_arg(
         consumed_args,
     ))
 }
-
-type IsLongName = bool;
 
 fn decompose_and_validate_arg_structure(
     arg: &str,
@@ -190,10 +199,7 @@ fn validate_and_create_arg(
         }
     };
 
-    Ok(ArgValuePair {
-        id: arg_definition.id.clone(),
-        value,
-    })
+    Ok(ArgValuePair::new(&arg_definition.id, value))
 }
 
 fn parse_u32(value: &str) -> Result<u32, String> {
@@ -305,19 +311,10 @@ mod tests {
     #[test]
     fn find_arg_test() {
         let arg_id = "some arg";
-        let arg_to_be_found = ArgValuePair {
-            id: arg_id.to_string(),
-            value: ArgValue::Bool(false),
-        };
+        let arg_to_be_found = ArgValuePair::new(arg_id, ArgValue::Bool(false));
         let mut arg_list = vec![
-            ArgValuePair {
-                id: "different arg".to_string(),
-                value: ArgValue::Bool(false),
-            },
-            ArgValuePair {
-                id: "another arg".to_string(),
-                value: ArgValue::Bool(false),
-            },
+            ArgValuePair::new("different arg", ArgValue::Bool(false)),
+            ArgValuePair::new("another arg", ArgValue::Bool(false)),
         ];
 
         assert_eq!(find_arg(arg_id, &arg_list), None);
@@ -335,10 +332,7 @@ mod tests {
     fn bool_assign_value_from_arg_list() {
         let expected = true;
         let arg_id = "some_arg";
-        let arg_list = [ArgValuePair {
-            id: "some_arg".to_string(),
-            value: ArgValue::Bool(expected),
-        }];
+        let arg_list = [ArgValuePair::new("some_arg", ArgValue::Bool(expected))];
         let arg_definitions = [ArgDefinition {
             id: arg_id.to_string(),
             short_name: Some('s'),
@@ -357,10 +351,10 @@ mod tests {
     fn u32_assign_value_from_arg_list() {
         let expected = 42;
         let arg_id = "some_arg";
-        let arg_list = [ArgValuePair {
-            id: "some_arg".to_string(),
-            value: ArgValue::UnsignedInt(expected),
-        }];
+        let arg_list = [ArgValuePair::new(
+            "some_arg",
+            ArgValue::UnsignedInt(expected),
+        )];
         let arg_definitions = [ArgDefinition {
             id: arg_id.to_string(),
             short_name: Some('s'),
@@ -379,10 +373,11 @@ mod tests {
     fn string_assign_value_from_arg_list() {
         let expected = "some string".to_string();
         let arg_id = "some_arg";
-        let arg_list = [ArgValuePair {
-            id: "some_arg".to_string(),
-            value: ArgValue::Str(expected.clone()),
-        }];
+        let arg_list = [ArgValuePair::new(
+            "some_arg",
+            ArgValue::Str(expected.clone()),
+        )];
+
         let arg_definitions = [ArgDefinition {
             id: arg_id.to_string(),
             short_name: Some('s'),
@@ -401,10 +396,7 @@ mod tests {
     #[should_panic(expected = "invalid type for option")]
     fn arg_found_but_no_value() {
         let arg_id = "arg";
-        let arg_list = [ArgValuePair {
-            id: arg_id.to_string(),
-            value: ArgValue::Bool(true), // incorrect type == no value
-        }];
+        let arg_list = [ArgValuePair::new(arg_id, ArgValue::Bool(true))];
         let arg_definitions = [];
 
         String::set_value_from_arg_or_default(arg_id, &arg_list, &arg_definitions);
@@ -554,10 +546,7 @@ mod tests {
             default_value: ArgValue::Bool(false),
         };
 
-        let expected = ArgValuePair {
-            id: arg.to_string(),
-            value: ArgValue::Bool(true),
-        };
+        let expected = ArgValuePair::new(arg, ArgValue::Bool(true));
         let arg_value_pair =
             validate_and_create_arg(arg, arg_value, &arg_definition).expect("test failed");
         assert_eq!(arg_value_pair, expected);
@@ -578,10 +567,7 @@ mod tests {
             default_value: ArgValue::UnsignedInt(0),
         };
 
-        let expected = ArgValuePair {
-            id: arg.to_string(),
-            value: ArgValue::UnsignedInt(value),
-        };
+        let expected = ArgValuePair::new(arg, ArgValue::UnsignedInt(value));
         let arg_value_pair = validate_and_create_arg(arg, arg_value.as_deref(), &arg_definition)
             .expect("test failed");
         assert_eq!(arg_value_pair, expected);
@@ -605,10 +591,7 @@ mod tests {
             default_value: ArgValue::Str("default".to_string()),
         };
 
-        let expected = ArgValuePair {
-            id: arg.to_string(),
-            value: ArgValue::Str(value.to_string()),
-        };
+        let expected = ArgValuePair::new(arg, ArgValue::Str(value.to_string()));
         let arg_value_pair =
             validate_and_create_arg(arg, arg_value, &arg_definition).expect("test failed");
         assert_eq!(arg_value_pair, expected);
@@ -782,10 +765,7 @@ mod tests {
         }];
 
         let parsed_arg = parse_and_validate_arg(&arg_list, &arg_definition_list).unwrap();
-        let expected_arg = ArgValuePair {
-            id: "short".to_string(),
-            value: ArgValue::UnsignedInt(arg_value),
-        };
+        let expected_arg = ArgValuePair::new("short", ArgValue::UnsignedInt(arg_value));
 
         assert_eq!(parsed_arg.0, expected_arg);
         assert_eq!(parsed_arg.1, 2); // consumed args
@@ -805,10 +785,7 @@ mod tests {
         }];
 
         let parsed_arg = parse_and_validate_arg(&arg_list, &arg_definition_list).unwrap();
-        let expected_arg = ArgValuePair {
-            id: "long".to_string(),
-            value: ArgValue::UnsignedInt(65),
-        };
+        let expected_arg = ArgValuePair::new("long", ArgValue::UnsignedInt(65));
 
         assert_eq!(parsed_arg.0, expected_arg);
         assert_eq!(parsed_arg.1, 1); // consumed args
@@ -828,10 +805,7 @@ mod tests {
         }];
 
         let parsed_arg = parse_and_validate_arg(&arg_list, &arg_definition_list).unwrap();
-        let expected_arg = ArgValuePair {
-            id: "long".to_string(),
-            value: ArgValue::Bool(true),
-        };
+        let expected_arg = ArgValuePair::new("long", ArgValue::Bool(true));
 
         assert_eq!(parsed_arg.0, expected_arg);
         assert_eq!(parsed_arg.1, 1); // consumed args
@@ -907,22 +881,13 @@ mod tests {
         let parsed_args =
             parse_and_validate_arg_list(&arg_list, &arg_definition_list).expect("test failed");
         let expected_args = vec![
-            ArgValuePair {
-                id: "long_u32".to_string(),
-                value: ArgValue::UnsignedInt(42),
-            },
-            ArgValuePair {
-                id: "long_flag".to_string(),
-                value: ArgValue::Bool(true),
-            },
-            ArgValuePair {
-                id: "short_with_value".to_string(),
-                value: ArgValue::Str("valid_string".to_string()),
-            },
-            ArgValuePair {
-                id: "short_flag".to_string(),
-                value: ArgValue::Bool(true),
-            },
+            ArgValuePair::new("long_u32", ArgValue::UnsignedInt(42)),
+            ArgValuePair::new("long_flag", ArgValue::Bool(true)),
+            ArgValuePair::new(
+                "short_with_value",
+                ArgValue::Str("valid_string".to_string()),
+            ),
+            ArgValuePair::new("short_flag", ArgValue::Bool(true)),
         ];
         assert_eq!(parsed_args, expected_args);
     }
@@ -982,14 +947,8 @@ mod tests {
         let parsed_args =
             parse_and_validate_arg_list(&arg_list, &arg_definition_list).expect("test failed");
         let expected_args = vec![
-            ArgValuePair {
-                id: "long_u32".to_string(),
-                value: ArgValue::UnsignedInt(42),
-            },
-            ArgValuePair {
-                id: "long_flag".to_string(),
-                value: ArgValue::Bool(true),
-            },
+            ArgValuePair::new("long_u32", ArgValue::UnsignedInt(42)),
+            ArgValuePair::new("long_flag", ArgValue::Bool(true)),
         ];
         assert_eq!(parsed_args, expected_args);
     }
@@ -1049,22 +1008,13 @@ mod tests {
         let parsed_args =
             parse_and_validate_arg_list(&arg_list, &arg_definition_list).expect("test failed");
         let expected_args = vec![
-            ArgValuePair {
-                id: "long_u32".to_string(),
-                value: ArgValue::UnsignedInt(42),
-            },
-            ArgValuePair {
-                id: "long_flag".to_string(),
-                value: ArgValue::Bool(true),
-            },
-            ArgValuePair {
-                id: "short_with_value".to_string(),
-                value: ArgValue::Str("valid_string".to_string()),
-            },
-            ArgValuePair {
-                id: "short_flag".to_string(),
-                value: ArgValue::Bool(true),
-            },
+            ArgValuePair::new("long_u32", ArgValue::UnsignedInt(42)),
+            ArgValuePair::new("long_flag", ArgValue::Bool(true)),
+            ArgValuePair::new(
+                "short_with_value",
+                ArgValue::Str("valid_string".to_string()),
+            ),
+            ArgValuePair::new("short_flag", ArgValue::Bool(true)),
         ];
         assert_eq!(parsed_args, expected_args);
     }
@@ -1125,22 +1075,13 @@ mod tests {
         let parsed_args =
             parse_and_validate_arg_list(&arg_list, &arg_definition_list).expect("test failed");
         let expected_args = vec![
-            ArgValuePair {
-                id: "long_u32".to_string(),
-                value: ArgValue::UnsignedInt(42),
-            },
-            ArgValuePair {
-                id: "long_flag".to_string(),
-                value: ArgValue::Bool(true),
-            },
-            ArgValuePair {
-                id: "short_with_value".to_string(),
-                value: ArgValue::Str("valid_string".to_string()),
-            },
-            ArgValuePair {
-                id: "short_flag".to_string(),
-                value: ArgValue::Bool(true),
-            },
+            ArgValuePair::new("long_u32", ArgValue::UnsignedInt(42)),
+            ArgValuePair::new("long_flag", ArgValue::Bool(true)),
+            ArgValuePair::new(
+                "short_with_value",
+                ArgValue::Str("valid_string".to_string()),
+            ),
+            ArgValuePair::new("short_flag", ArgValue::Bool(true)),
         ];
         assert_eq!(parsed_args, expected_args);
     }
