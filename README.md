@@ -55,8 +55,9 @@ Initial list of skills:
 - accuracy counter & post-game statistics
 - showing stats in between questions
 - handling of on-error behaviour
+- create builder for ArgDefinition
 
-## Powers of 2
+## Powers
 
 - help & usage prompts
 - question generation w/ options

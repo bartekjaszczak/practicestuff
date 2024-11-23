@@ -1,4 +1,4 @@
-use super::{QuestionAndAnswer, SkillBase};
+use super::{Question, SkillBase};
 use crate::application::APP_NAME;
 use crate::args::{self, ArgDefinition, SetFromArg};
 
@@ -83,6 +83,7 @@ impl Powers {
                 id: ARG_ID_HELP.to_string(),
                 short_name: Some('h'),
                 long_name: Some("help".to_string()),
+                description: vec!["Display help for powers command.".to_string()],
                 kind: args::ArgKindDefinition::Flag,
                 stop_parsing: true,
                 default_value: args::ArgValue::Bool(false),
@@ -91,6 +92,7 @@ impl Powers {
                 id: ARG_ID_BASE.to_string(),
                 short_name: Some('b'),
                 long_name: Some("base".to_string()),
+                description: vec!["Set the base for powers (default: 2).".to_string()],
                 kind: args::ArgKindDefinition::Value(args::ValueKindDefinition::UnsignedInt),
                 stop_parsing: false,
                 default_value: args::ArgValue::UnsignedInt(2),
@@ -99,6 +101,7 @@ impl Powers {
                 id: ARG_ID_LOWER_BOUNDARY.to_string(),
                 short_name: Some('l'),
                 long_name: Some("lower-boundary".to_string()),
+                description: vec!["Set the minimum exponent to use in questions (default: 1).".to_string()],
                 kind: args::ArgKindDefinition::Value(args::ValueKindDefinition::UnsignedInt),
                 stop_parsing: false,
                 default_value: args::ArgValue::UnsignedInt(1),
@@ -107,6 +110,7 @@ impl Powers {
                 id: ARG_ID_UPPER_BOUNDARY.to_string(),
                 short_name: Some('u'),
                 long_name: Some("upper-boundary".to_string()),
+                description: vec!["Set the maximum exponent to use in questions (default: 16).".to_string()],
                 kind: args::ArgKindDefinition::Value(args::ValueKindDefinition::UnsignedInt),
                 stop_parsing: false,
                 default_value: args::ArgValue::UnsignedInt(16),
@@ -131,7 +135,7 @@ impl Powers {
 }
 
 impl SkillBase for Powers {
-    fn generate_questions_and_answers(&self, count: u32) -> Vec<QuestionAndAnswer> {
+    fn generate_questions(&self, count: u32) -> Vec<Question> {
         todo!()
     }
 }
