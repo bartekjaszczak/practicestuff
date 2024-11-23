@@ -43,3 +43,36 @@ Initial list of skills:
 
 - time mode (e.g. x guesses in certain amount of time)
 - colourful output
+
+# TODO
+
+## General
+
+- help & usage prompts
+- version prompt
+- implementation of main loop (w/ exit)
+- handling of numOfQuestions=0 (infinite loop)
+- handling of SIGTERM
+- accuracy counter & post-game statistics
+- showing stats in between questions
+- handling of on-error behaviour
+
+## Powers of 2
+
+- help & usage prompts
+- question generation w/ options
+
+## Doomsday
+
+- help & usage prompts
+- question generation w/ options
+
+## Multiplication table
+
+- help & usage prompts
+- question generation w/ options
+
+## Improvements
+
+- coloured output (termcolor?)
+- additional mode (as many answers in given time)
