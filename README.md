@@ -48,14 +48,13 @@ Initial list of skills:
 
 ## General
 
-- help & usage prompts
+- tests for help module
 - implementation of main loop (w/ exit)
 - handling of numOfQuestions=0 (infinite loop)
 - handling of SIGTERM
 - accuracy counter & post-game statistics
 - showing stats in between questions
 - handling of on-error behaviour
-- create builder for ArgDefinition
 
 ## Powers
 

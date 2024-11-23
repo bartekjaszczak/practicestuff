@@ -146,7 +146,7 @@ impl GeneralOptions {
         })
     }
 
-    fn get_arg_definitions() -> Vec<ArgDefinition> {
+    pub fn get_arg_definitions() -> Vec<ArgDefinition> {
         vec![
             ArgDefinition::builder()
                 .id(ARG_ID_HELP)
