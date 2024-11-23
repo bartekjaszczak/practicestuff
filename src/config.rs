@@ -1,7 +1,5 @@
 use crate::application::{self, Application};
-use crate::args::{
-    self, ArgDefinition, ArgKindDefinition, ArgValue, SetFromArg, ValueKindDefinition,
-};
+use crate::args::{prelude::*, self};
 use crate::skill::doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
 use crate::skill::powers::CMD_POWERS;
 use crate::skill::times_table::CMD_TIMES_TABLE;
@@ -86,7 +84,7 @@ impl Config {
 }
 
 #[derive(Debug, Copy, Clone)]
-enum BehaviourOnError {
+pub enum BehaviourOnError {
     NextQuestion,
     ShowCorrect,
     Repeat,
@@ -150,58 +148,69 @@ impl GeneralOptions {
 
     fn get_arg_definitions() -> Vec<ArgDefinition> {
         vec![
-            ArgDefinition {
-                id: ARG_ID_HELP.to_string(),
-                short_name: Some('h'),
-                long_name: Some("help".to_string()),
-                description: vec!["Display this help message.".to_string()],
-                kind: ArgKindDefinition::Flag,
-                stop_parsing: true,
-                default_value: ArgValue::Bool(false),
-            },
-            ArgDefinition {
-                id: ARG_ID_VERSION.to_string(),
-                short_name: Some('v'),
-                long_name: Some("version".to_string()),
-                description: vec!["Show version information.".to_string()],
-                kind: ArgKindDefinition::Flag,
-                stop_parsing: true,
-                default_value: ArgValue::Bool(false),
-            },
-            ArgDefinition {
-                id: ARG_ID_NUMBER_OF_QUESTIONS.to_string(),
-                short_name: Some('n'),
-                long_name: Some("number-of-questions".to_string()),
-                description: vec!["Specify the number of questions to ask (default: 20).".to_string()],
-                kind: ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt),
-                stop_parsing: false,
-                default_value: ArgValue::UnsignedInt(20),
-            },
-            ArgDefinition {
-                id: ARG_ID_DISABLE_LIVE_STATISTICS.to_string(),
-                short_name: Some('d'),
-                long_name: Some("disable-live-statistics".to_string()),
-                description: vec!["Disable live statistics; statistics will now display between questions.".to_string()],
-                kind: ArgKindDefinition::Flag,
-                stop_parsing: false,
-                default_value: ArgValue::Bool(false),
-            },
-            ArgDefinition {
-                id: ARG_ID_BEHAVIOUR_ON_ERROR.to_string(),
-                short_name: Some('b'),
-                long_name: Some("behaviour-on-error".to_string()),
-                description: vec!["Define behaviour on incorrect answer (default: showcorrect):".to_string(),
-                                  "  - continue: proceed to the next question.".to_string(),
-                                  "  - showcorrect: proceed to the next question and display the correct answer.".to_string(),
-                                  "  - repeat: ask the question again until the correct answer is provided.".to_string()],
-                kind: ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(vec![
-                    BEHAVIOUR_ON_ERROR_CONTINUE.to_string(),
-                    BEHAVIOUR_ON_ERROR_SHOW_CORRECT.to_string(),
-                    BEHAVIOUR_ON_ERROR_REPEAT.to_string(),
-                ])),
-                stop_parsing: false,
-                default_value: ArgValue::Str("showcorrect".to_string()),
-            },
+            ArgDefinition::builder()
+                .id(ARG_ID_HELP)
+                .short_name('h')
+                .long_name("help")
+                .description(vec!["Display this help message.".to_string()])
+                .kind(ArgKindDefinition::Flag)
+                .stop_parsing(true)
+                .default_value(ArgValue::Bool(false))
+                .build(),
+            ArgDefinition::builder()
+                .id(ARG_ID_VERSION)
+                .short_name('v')
+                .long_name("version")
+                .description(vec!["Show version information.".to_string()])
+                .kind(ArgKindDefinition::Flag)
+                .stop_parsing(true)
+                .default_value(ArgValue::Bool(false))
+                .build(),
+            ArgDefinition::builder()
+                .id(ARG_ID_NUMBER_OF_QUESTIONS)
+                .short_name('n')
+                .long_name("number-of-questions")
+                .description(vec![
+                    "Specify the number of questions to ask (default: 20).".to_string(),
+                ])
+                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .stop_parsing(false)
+                .default_value(ArgValue::UnsignedInt(20))
+                .build(),
+            ArgDefinition::builder()
+                .id(ARG_ID_DISABLE_LIVE_STATISTICS)
+                .short_name('d')
+                .long_name("disable-live-statistics")
+                .description(vec![
+                    "Disable live statistics; statistics will now display between questions."
+                        .to_string(),
+                ])
+                .kind(ArgKindDefinition::Flag)
+                .stop_parsing(false)
+                .default_value(ArgValue::Bool(false))
+                .build(),
+            ArgDefinition::builder()
+                .id(ARG_ID_BEHAVIOUR_ON_ERROR)
+                .short_name('b')
+                .long_name("behaviour-on-error")
+                .description(vec![
+                    "Define behaviour on incorrect answer (default: showcorrect):".to_string(),
+                    "  - continue: proceed to the next question.".to_string(),
+                    "  - showcorrect: proceed to the next question and display the correct answer."
+                        .to_string(),
+                    "  - repeat: ask the question again until the correct answer is provided."
+                        .to_string(),
+                ])
+                .kind(ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(
+                    vec![
+                        BEHAVIOUR_ON_ERROR_CONTINUE.to_string(),
+                        BEHAVIOUR_ON_ERROR_SHOW_CORRECT.to_string(),
+                        BEHAVIOUR_ON_ERROR_REPEAT.to_string(),
+                    ],
+                )))
+                .stop_parsing(false)
+                .default_value(ArgValue::Str("showcorrect".to_string()))
+                .build(),
         ]
     }
 }
