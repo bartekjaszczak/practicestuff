@@ -49,7 +49,6 @@ Initial list of skills:
 ## General
 
 - help & usage prompts
-- version prompt
 - implementation of main loop (w/ exit)
 - handling of numOfQuestions=0 (infinite loop)
 - handling of SIGTERM
