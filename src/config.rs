@@ -23,8 +23,8 @@ const BEHAVIOUR_ON_ERROR_REPEAT: &str = "repeat";
 
 #[derive(Debug)]
 pub struct Config {
-    options: GeneralOptions,
-    skill: Option<Box<dyn Skill>>,
+    pub options: GeneralOptions,
+    pub skill: Option<Box<dyn Skill>>,
 }
 
 impl Config {
@@ -104,13 +104,13 @@ impl BehaviourOnError {
 }
 
 #[derive(Debug, Copy, Clone)]
-struct GeneralOptions {
-    show_help: bool,
-    show_version: bool,
+pub struct GeneralOptions {
+    pub show_help: bool,
+    pub show_version: bool,
 
-    number_of_questions: u32,
-    disable_live_statistics: bool,
-    behaviour_on_error: BehaviourOnError,
+    pub number_of_questions: u32,
+    pub disable_live_statistics: bool,
+    pub behaviour_on_error: BehaviourOnError,
 }
 
 impl GeneralOptions {
