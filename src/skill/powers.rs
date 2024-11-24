@@ -1,6 +1,6 @@
 use super::{Question, SkillBase};
 use crate::application::APP_NAME;
-use crate::args::{self, prelude::*};
+use crate::args::prelude::*;
 
 pub const CMD_POWERS: &str = "powers";
 
@@ -8,8 +8,6 @@ const ARG_ID_HELP: &str = "help";
 const ARG_ID_BASE: &str = "base";
 const ARG_ID_LOWER_BOUNDARY: &str = "lower_boundary";
 const ARG_ID_UPPER_BOUNDARY: &str = "upper_boundary";
-
-type RequiresValue = bool;
 
 #[derive(Debug)]
 pub struct Powers {
@@ -34,7 +32,7 @@ enum OptionType {
 impl Powers {
     pub fn build(args: &[String]) -> Result<Self, String> {
         let arg_definitions = Self::get_arg_definitions();
-        let parsed_args = args::parse_and_validate_arg_list(args, &arg_definitions)
+        let parsed_args = parser::parse_and_validate_arg_list(args, &arg_definitions)
             .map_err(|err| Self::build_err_message(Some(err)))?;
 
         let show_help =

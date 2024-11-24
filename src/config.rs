@@ -1,5 +1,5 @@
 use crate::application::{self, Application};
-use crate::args::{prelude::*, self};
+use crate::args::prelude::*;
 use crate::skill::doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
 use crate::skill::powers::CMD_POWERS;
 use crate::skill::times_table::CMD_TIMES_TABLE;
@@ -114,7 +114,7 @@ pub struct GeneralOptions {
 impl GeneralOptions {
     fn build(args: &[String]) -> Result<Self, String> {
         let arg_definitions = Self::get_arg_definitions();
-        let parsed_args = args::parse_and_validate_arg_list(args, &arg_definitions)?;
+        let parsed_args = parser::parse_and_validate_arg_list(args, &arg_definitions)?;
 
         let show_help =
             bool::set_value_from_arg_or_default(ARG_ID_HELP, &parsed_args, &arg_definitions);

@@ -1,17 +1,17 @@
 use crate::config::GeneralOptions;
-use crate::help::{self, Command};
 use crate::skill::doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
 use crate::skill::powers::CMD_POWERS;
 use crate::skill::times_table::CMD_TIMES_TABLE;
+use crate::args::prelude::*;
 use crate::Config;
 
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const COMMANDS: [Command; 3] = [
-    Command::new(CMD_POWERS, "Practice powers (configurable base)."),
-    Command::new(CMD_TIMES_TABLE, "Practice multiplication table."),
-    Command::new(CMD_DOOMSDAY_ALGORITHM, "Practice the Doomsday algorithm."),
+const COMMANDS: [help::Command; 3] = [
+    help::Command::new(CMD_POWERS, "Practice powers (configurable base)."),
+    help::Command::new(CMD_TIMES_TABLE, "Practice multiplication table."),
+    help::Command::new(CMD_DOOMSDAY_ALGORITHM, "Practice the Doomsday algorithm."),
 ];
 
 pub struct Application;

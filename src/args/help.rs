@@ -1,5 +1,5 @@
-use crate::args::prelude::*;
 use std::cmp;
+use super::definition::*;
 
 const INDENT_WIDTH: usize = 2; // indent of 2 spaces before the option/command
 const LONG_NAME_PREFIX: usize = 2; // the "--" before the long name
