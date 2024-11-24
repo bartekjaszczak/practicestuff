@@ -1,4 +1,4 @@
-use super::*;
+use super::ArgValue;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ValueKindDefinition {

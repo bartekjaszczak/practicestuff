@@ -48,7 +48,6 @@ Initial list of skills:
 
 ## General
 
-- tests for help module
 - implementation of main loop (w/ exit)
 - handling of numOfQuestions=0 (infinite loop)
 - handling of SIGTERM
