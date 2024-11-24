@@ -1,9 +1,9 @@
+use crate::args::prelude::*;
 use crate::config::GeneralOptions;
 use crate::skill::doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
 use crate::skill::powers::CMD_POWERS;
 use crate::skill::times_table::CMD_TIMES_TABLE;
-use crate::args::prelude::*;
-use crate::Config;
+use crate::{skill, Config};
 
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -22,9 +22,13 @@ impl Application {
             Application::print_help();
         } else if config.options.show_version {
             Application::print_version();
-        } else {
-            println!("{config:#?}");
+        } else if let Some(skill) = &config.skill {
+            if skill.show_help_and_exit() {
+                return Ok(());
+            }
         }
+
+        println!("{config:#?}");
 
         Ok(())
     }
@@ -38,11 +42,9 @@ impl Application {
     }
 
     fn print_help() {
-        let help_text = help::build(
-            &Application::usage(),
-            &GeneralOptions::get_arg_definitions(),
-            &COMMANDS,
-        );
+        let definitions = &GeneralOptions::get_arg_definitions();
+        let options = help::Options::new("General options", definitions);
+        let help_text = help::build(&Application::usage(), &options, &COMMANDS);
         println!("{help_text}");
     }
 

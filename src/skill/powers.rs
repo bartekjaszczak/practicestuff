@@ -18,10 +18,6 @@ pub struct Powers {
     upper_boundary: u32,
 }
 
-// -b, --base
-// -l, --lower-boundary
-// -u, --upper-boundary
-
 enum OptionType {
     ShowHelp,
     Base,
@@ -72,7 +68,10 @@ impl Powers {
     }
 
     fn print_help() {
-        todo!()
+        let definitions = &Powers::get_arg_definitions();
+        let options = help::Options::new("Powers options", definitions);
+        let help_text = help::build(&Powers::usage(), &options, &[]);
+        println!("{help_text}");
     }
 
     fn get_arg_definitions() -> Vec<ArgDefinition> {
@@ -81,7 +80,7 @@ impl Powers {
                 .id(ARG_ID_HELP)
                 .short_name('h')
                 .long_name("help")
-                .description(vec!["Display help for power command.".to_string()])
+                .description(vec!["Display help for powers command.".to_string()])
                 .kind(ArgKindDefinition::Flag)
                 .stop_parsing(true)
                 .default_value(ArgValue::Bool(false))
@@ -139,5 +138,14 @@ impl Powers {
 impl SkillBase for Powers {
     fn generate_questions(&self, count: u32) -> Vec<Question> {
         todo!()
+    }
+
+    fn show_help_and_exit(&self) -> bool {
+        if self.show_help {
+            Self::print_help();
+            return true;
+        }
+
+        false
     }
 }

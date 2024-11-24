@@ -57,7 +57,6 @@ Initial list of skills:
 
 ## Powers
 
-- help & usage prompts
 - question generation w/ options
 
 ## Doomsday

@@ -8,12 +8,13 @@ use doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
 use powers::{Powers, CMD_POWERS};
 use times_table::CMD_TIMES_TABLE;
 
-struct Question {
+pub struct Question {
     question: String,
     accepted_answers: Vec<String>,
 }
 
-trait SkillBase {
+pub trait SkillBase {
+    fn show_help_and_exit(&self) -> bool;
     fn generate_questions(&self, count: u32) -> Vec<Question>;
 }
 

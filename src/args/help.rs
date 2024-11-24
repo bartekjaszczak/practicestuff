@@ -13,20 +13,39 @@ pub struct Command<'a> {
 
 impl<'a> Command<'a> {
     pub const fn new(name: &'a str, description: &'a str) -> Self {
-        Command { name, description }
+        Self { name, description }
     }
 }
 
-pub fn build(usage: &str, options: &[ArgDefinition], commands: &[Command]) -> String {
+pub struct Options<'a> {
+    title: &'a str,
+    definitions: &'a [ArgDefinition],
+}
+
+impl<'a> Options<'a> {
+    pub fn new(title: &'a str, options: &'a [ArgDefinition]) -> Self {
+        Self {
+            title,
+            definitions: options,
+        }
+    }
+}
+
+pub fn build(usage: &str, options: &Options, commands: &[Command]) -> String {
     let mut help = String::new();
 
     help.push_str(usage);
 
-    let first_column_width = calculate_first_column_width(options, commands);
+    let definitions = &options.definitions;
 
-    if !options.is_empty() {
-        help.push_str("\n\nOptions:\n");
-        help.push_str(&build_options(options, first_column_width));
+    let first_column_width = calculate_first_column_width(definitions, commands);
+
+    if !definitions.is_empty() {
+        help.push_str("\n\n");
+        help.push_str(options.title);
+        help.push_str(":\n");
+
+        help.push_str(&build_options(definitions, first_column_width));
     }
 
     if !commands.is_empty() {
@@ -288,12 +307,13 @@ mod tests {
 
     #[test]
     fn only_options() {
-        let options = [ArgDefinition::builder()
+        let definitions = [ArgDefinition::builder()
             .id("arg")
             .long_name("some-name")
             .kind(ArgKindDefinition::Flag)
             .default_value(ArgValue::Bool(false))
             .build()];
+        let options = Options::new("Options", &definitions);
 
         let result = super::build("Usage: something something", &options, &[]);
         assert!(result.contains("Usage: something something"));
@@ -304,11 +324,13 @@ mod tests {
 
     #[test]
     fn only_commands() {
-        let commands = [
-            Command::new("cmd", "desc")
-        ];
+        let commands = [Command::new("cmd", "desc")];
 
-        let result = super::build("Usage: something something", &[], &commands);
+        let result = super::build(
+            "Usage: something something",
+            &Options::new("Options", &[]),
+            &commands,
+        );
         assert!(result.contains("Usage: something something"));
         assert!(!result.contains("Options:"));
         assert!(result.contains("Commands:"));
@@ -320,7 +342,7 @@ mod tests {
     fn full_help() {
         let usage = "Usage: some text";
 
-        let options = [
+        let definitions = [
             ArgDefinition::builder()
                 .id("arg1")
                 .short_name('a')
@@ -355,6 +377,8 @@ mod tests {
                 .build(),
         ];
 
+        let options = Options::new("Custom options header", &definitions);
+
         let commands = [
             Command::new("first-command", ""),
             Command::new("second", "This one has a description."),
@@ -363,7 +387,7 @@ mod tests {
         let mut expected = String::new();
         expected.push_str("Usage: some text\n");
         expected.push('\n');
-        expected.push_str("Options:\n");
+        expected.push_str("Custom options header:\n");
         expected.push_str("  -a, --first-name   one-line description\n");
         expected.push_str("  -b,                \n");
         expected.push_str("      --third-name   first description line\n");
