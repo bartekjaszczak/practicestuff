@@ -13,6 +13,23 @@ pub struct Question {
     accepted_answers: Vec<String>,
 }
 
+impl Question {
+    pub fn new(question: &str, accepted_answers: &[String]) -> Self {
+        Self {
+            question: question.to_string(),
+            accepted_answers: accepted_answers.to_vec(),
+        }
+    }
+
+    pub fn question(&self) -> &String {
+        &self.question
+    }
+
+    pub fn accepted_answers(&self) -> &Vec<String> {
+        &self.accepted_answers
+    }
+}
+
 pub trait SkillBase {
     fn show_help_and_exit(&self) -> bool;
     fn generate_questions(&self, count: u32) -> Vec<Question>;

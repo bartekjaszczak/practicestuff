@@ -1,3 +1,7 @@
+# WIP
+
+This is a work in progress and not all functionalities may function correctly (or even be implemented).
+
 # Idea
 
 CLI app designed to help you practice skills by asking questions and checking your answers.
@@ -48,7 +52,6 @@ Initial list of skills:
 
 ## General
 
-- implementation of main loop (w/ exit)
 - handling of numOfQuestions=0 (infinite loop)
 - handling of SIGTERM
 - accuracy counter & post-game statistics

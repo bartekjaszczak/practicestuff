@@ -68,9 +68,9 @@ impl Powers {
     }
 
     fn print_help() {
-        let definitions = &Powers::get_arg_definitions();
+        let definitions = &Self::get_arg_definitions();
         let options = help::Options::new("Powers options", definitions);
-        let help_text = help::build(&Powers::usage(), &options, &[]);
+        let help_text = help::build(&Self::usage(), &options, &[]);
         println!("{help_text}");
     }
 
@@ -133,11 +133,19 @@ impl Powers {
             format!("{}\n{}", Self::usage(), Self::help_prompt())
         }
     }
+
+    fn generate_question() -> Question {
+        Question::new("Example question", &["Example answer".to_string()])
+    }
 }
 
 impl SkillBase for Powers {
     fn generate_questions(&self, count: u32) -> Vec<Question> {
-        todo!()
+        let mut questions = Vec::new();
+        for _ in 0..count {
+            questions.push(Self::generate_question());
+        }
+        questions
     }
 
     fn show_help_and_exit(&self) -> bool {

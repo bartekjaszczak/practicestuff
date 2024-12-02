@@ -1,5 +1,5 @@
-use super::definition::*;
-use super::*;
+use super::definition::{ArgDefinition, ArgKindDefinition, ValueKindDefinition};
+use super::{ArgValue, ArgValuePair, definition};
 
 type IsLongName = bool;
 
@@ -121,7 +121,7 @@ fn validate_and_create_arg(
         }
     };
 
-    Ok(ArgValuePair::new(&arg_definition.id(), value))
+    Ok(ArgValuePair::new(arg_definition.id(), value))
 }
 
 fn parse_u32(value: &str) -> Result<u32, String> {

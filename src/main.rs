@@ -1,5 +1,5 @@
-use std::{env, process};
 use practicestuff::{Application, Config};
+use std::{env, process};
 
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -9,8 +9,5 @@ fn main() {
         process::exit(1);
     });
 
-    if let Err(err) = Application::run(&config) {
-        eprintln!("{err}");
-        process::exit(2);
-    }
+    Application::run(&config);
 }

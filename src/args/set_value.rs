@@ -1,5 +1,5 @@
-use super::*;
-use super::definition::*;
+use super::{ArgValue, ArgValuePair};
+use super::definition::ArgDefinition;
 
 pub trait SetFromArg {
     fn set_value_from_arg_or_default(
@@ -89,6 +89,7 @@ impl SetFromArg for String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::args::definition::{ArgKindDefinition, ValueKindDefinition};
 
     #[test]
     fn find_arg_test() {
