@@ -52,7 +52,7 @@ Initial list of skills:
 
 ## General
 
-- handling of SIGTERM
+- handling of SIGINT
 - accuracy counter & post-game statistics
 - showing stats in between questions
 - handling of on-error behaviour

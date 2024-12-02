@@ -9,5 +9,5 @@ fn main() {
         process::exit(1);
     });
 
-    Application::run(&config);
+    Application::run(config);
 }

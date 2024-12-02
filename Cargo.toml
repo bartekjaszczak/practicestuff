@@ -1,6 +1,6 @@
 [package]
 name = "practicestuff"
-version = "0.0.6"
+version = "0.0.7"
 description = "Simple CLI trainer for improving calculation and memorisation skills"
 authors = ["Bartłomiej Jaszczak"]
 repository = "https://gitlab.com/bartekjaszczak/practicestuff"
@@ -11,3 +11,4 @@ categories = ["command-line-utilities", "mathematics"]
 edition = "2021"
 
 [dependencies]
+ctrlc = "3.4"

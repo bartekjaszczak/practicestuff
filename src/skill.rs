@@ -51,8 +51,8 @@ pub trait SkillBase {
     fn generate_questions(&self, count: u32) -> Vec<Question>;
 }
 
-pub trait Skill: SkillBase + fmt::Debug {}
-impl<T: SkillBase + fmt::Debug> Skill for T {}
+pub trait Skill: SkillBase + fmt::Debug + Sync + Send {}
+impl<T: SkillBase + fmt::Debug + Sync + Send> Skill for T {}
 
 pub fn build(command: &str, args: &[String]) -> Result<Box<dyn Skill>, String> {
     match command {

@@ -1,4 +1,7 @@
 use std::io::{self, Write};
+use std::process;
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 
 use crate::args::prelude::*;
 use crate::config::Config;
@@ -20,18 +23,19 @@ const COMMANDS: [help::Command; 3] = [
 pub struct Application;
 
 impl Application {
-    pub fn run(config: &Config) {
-        if config.options.show_help {
-            Self::print_help();
-        } else if config.options.show_version {
-            Self::print_version();
-        } else if let Some(skill) = &config.skill {
-            if skill.show_help_and_exit() {
-                return;
-            }
-        }
+    pub fn run(config: Config) {
+        let app = Arc::new(AppImpl {
+            config,
+            score: AtomicU32::new(0),
+        });
 
-        Self::play(config);
+        let app_ref = app.clone();
+        ctrlc::set_handler(move || {
+            app_ref.handle_interrupt();
+        })
+        .expect("Error setting Ctrl-C handler");
+
+        app.run();
     }
 
     pub(crate) fn usage() -> String {
@@ -41,11 +45,32 @@ impl Application {
     pub(crate) fn help_prompt() -> String {
         format!("Try '{APP_NAME} --help' for more information.")
     }
+}
+
+struct AppImpl {
+    config: Config,
+    score: AtomicU32,
+}
+
+impl AppImpl {
+    pub fn run(&self) {
+        if self.config.options.show_help {
+            Self::print_help();
+        } else if self.config.options.show_version {
+            Self::print_version();
+        } else if let Some(skill) = &self.config.skill {
+            if skill.show_help_and_exit() {
+                return;
+            }
+        }
+
+        self.play();
+    }
 
     fn print_help() {
         let definitions = &GeneralOptions::get_arg_definitions();
         let options = help::Options::new("General options", definitions);
-        let help_text = help::build(&Self::usage(), &options, &COMMANDS);
+        let help_text = help::build(&Application::usage(), &options, &COMMANDS);
         println!("{help_text}");
     }
 
@@ -53,9 +78,13 @@ impl Application {
         println!("{APP_NAME} {VERSION}");
     }
 
-    fn play(config: &Config) {
-        let num_of_questions = config.options.number_of_questions;
-        let skill = config.skill.as_ref().expect("Skill expected at this point");
+    fn play(&self) {
+        let num_of_questions = self.config.options.number_of_questions;
+        let skill = self
+            .config
+            .skill
+            .as_ref()
+            .expect("Skill expected at this point");
         let questions = skill.generate_questions(num_of_questions);
         assert_eq!(questions.len(), num_of_questions as usize);
 
@@ -74,6 +103,7 @@ impl Application {
             let correct = Self::handle_question(&question);
             if correct {
                 println!("Correct!");
+                self.score.fetch_add(1, Ordering::Relaxed);
             } else {
                 println!("Incorrect!");
             }
@@ -110,5 +140,14 @@ impl Application {
 
         let answer = Self::get_input();
         question.is_answer_correct(&answer)
+    }
+
+    fn handle_interrupt(&self) {
+        // println!(
+        //     "\nHandling interrupt, score: {}",
+        //     self.score.load(Ordering::Relaxed)
+        // );
+        println!("\nExiting...");
+        process::exit(1);
     }
 }
