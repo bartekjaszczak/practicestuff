@@ -1,1 +1,1 @@
-pub const CMD_DOOMSDAY_ALGORITHM: &str = "doomsday";
+pub const CMD: &str = "doomsday";

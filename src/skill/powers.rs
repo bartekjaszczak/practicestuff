@@ -2,7 +2,7 @@ use super::{Question, SkillBase};
 use crate::application::APP_NAME;
 use crate::args::prelude::*;
 
-pub const CMD_POWERS: &str = "powers";
+pub const CMD: &str = "powers";
 
 const ARG_ID_HELP: &str = "help";
 const ARG_ID_BASE: &str = "base";
@@ -124,7 +124,7 @@ impl Powers {
             format!(
                 "{}: {}: {}\n{}\n{}",
                 APP_NAME,
-                CMD_POWERS,
+                CMD,
                 msg,
                 Self::usage(),
                 Self::help_prompt()

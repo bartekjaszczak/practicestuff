@@ -3,18 +3,18 @@ use std::io::{self, Write};
 use crate::args::prelude::*;
 use crate::config::Config;
 use crate::config::GeneralOptions;
-use crate::skill::doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
-use crate::skill::powers::CMD_POWERS;
-use crate::skill::times_table::CMD_TIMES_TABLE;
+use crate::skill::doomsday_algorithm;
+use crate::skill::powers;
+use crate::skill::times_table;
 use crate::skill::Question;
 
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const COMMANDS: [help::Command; 3] = [
-    help::Command::new(CMD_POWERS, "Practice powers (configurable base)."),
-    help::Command::new(CMD_TIMES_TABLE, "Practice multiplication table."),
-    help::Command::new(CMD_DOOMSDAY_ALGORITHM, "Practice the Doomsday algorithm."),
+    help::Command::new(powers::CMD, "Practice powers (configurable base)."),
+    help::Command::new(times_table::CMD, "Practice multiplication table."),
+    help::Command::new(doomsday_algorithm::CMD, "Practice the Doomsday algorithm."),
 ];
 
 pub struct Application;

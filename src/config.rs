@@ -1,13 +1,13 @@
 use crate::application::{self, Application};
 use crate::args::prelude::*;
-use crate::skill::doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
-use crate::skill::powers::CMD_POWERS;
-use crate::skill::times_table::CMD_TIMES_TABLE;
+use crate::skill::doomsday_algorithm;
+use crate::skill::powers;
+use crate::skill::times_table;
 use crate::skill::{self, Skill};
 
 use std::cmp;
 
-const COMMANDS: [&str; 3] = [CMD_POWERS, CMD_TIMES_TABLE, CMD_DOOMSDAY_ALGORITHM];
+const COMMANDS: [&str; 3] = [powers::CMD, times_table::CMD, doomsday_algorithm::CMD];
 
 const ARG_ID_HELP: &str = "help";
 const ARG_ID_VERSION: &str = "version";

@@ -56,20 +56,26 @@ Initial list of skills:
 - accuracy counter & post-game statistics
 - showing stats in between questions
 - handling of on-error behaviour
+- tests for config module
+- tests for skill module
+- integration tests
 
 ## Powers
 
 - question generation w/ options
+- tests
 
 ## Doomsday
 
 - help & usage prompts
 - question generation w/ options
+- tests
 
 ## Multiplication table
 
 - help & usage prompts
 - question generation w/ options
+- tests
 
 ## Improvements
 
