@@ -8,16 +8,26 @@ use doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
 use powers::{Powers, CMD_POWERS};
 use times_table::CMD_TIMES_TABLE;
 
+#[derive(Clone)]
 pub struct Question {
     question: String,
-    accepted_answers: Vec<String>,
+    answer: String,
+    alternative_answers: Vec<String>,
+    allow_any_case: bool,
 }
 
 impl Question {
-    pub fn new(question: &str, accepted_answers: &[String]) -> Self {
+    pub fn new(
+        question: &str,
+        answer: &str,
+        alternative_answers: &[String],
+        allow_any_case: bool,
+    ) -> Self {
         Self {
             question: question.to_string(),
-            accepted_answers: accepted_answers.to_vec(),
+            answer: answer.to_string(),
+            alternative_answers: alternative_answers.to_vec(),
+            allow_any_case,
         }
     }
 
@@ -25,8 +35,16 @@ impl Question {
         &self.question
     }
 
-    pub fn accepted_answers(&self) -> &Vec<String> {
-        &self.accepted_answers
+    pub fn is_answer_correct(&self, answer: &String) -> bool {
+        if self.allow_any_case {
+            answer.to_ascii_lowercase() == self.answer.to_ascii_lowercase()
+                || self
+                    .alternative_answers
+                    .iter()
+                    .any(|elem| answer.to_ascii_lowercase() == elem.to_ascii_lowercase())
+        } else {
+            answer.as_str() == self.answer || self.alternative_answers.contains(answer)
+        }
     }
 }
 

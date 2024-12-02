@@ -171,7 +171,7 @@ impl GeneralOptions {
                 .short_name('n')
                 .long_name("number-of-questions")
                 .description(vec![
-                    "Specify the number of questions to ask (default: 20).".to_string(),
+                    "Specify the number of questions to ask (0 for infinite, default: 20)".to_string(),
                 ])
                 .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
                 .stop_parsing(false)

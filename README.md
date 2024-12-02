@@ -52,7 +52,6 @@ Initial list of skills:
 
 ## General
 
-- handling of numOfQuestions=0 (infinite loop)
 - handling of SIGTERM
 - accuracy counter & post-game statistics
 - showing stats in between questions

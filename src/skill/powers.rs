@@ -135,7 +135,7 @@ impl Powers {
     }
 
     fn generate_question() -> Question {
-        Question::new("Example question", &["Example answer".to_string()])
+        Question::new("Example question", "yes", &[], true)
     }
 }
 

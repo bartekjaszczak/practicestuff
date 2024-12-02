@@ -1,11 +1,12 @@
 use std::io::{self, Write};
 
 use crate::args::prelude::*;
+use crate::config::Config;
 use crate::config::GeneralOptions;
 use crate::skill::doomsday_algorithm::CMD_DOOMSDAY_ALGORITHM;
 use crate::skill::powers::CMD_POWERS;
 use crate::skill::times_table::CMD_TIMES_TABLE;
-use crate::Config;
+use crate::skill::Question;
 
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -58,20 +59,25 @@ impl Application {
         let questions = skill.generate_questions(num_of_questions);
         assert_eq!(questions.len(), num_of_questions as usize);
 
-        let s = if num_of_questions > 1 { "s" } else { "" };
-        println!("{num_of_questions} question{s}. Use Ctrl+C to exit.");
-        for question in &questions {
-            println!("\nQ: {}", question.question());
-            print!("A: ");
-            let _ = io::stdout().flush();
+        Self::print_intro(num_of_questions);
 
-            let answer = Self::get_input();
-            let correct = question.accepted_answers().contains(&answer);
+        let infinite = num_of_questions == 0;
+        let mut question_number: u32 = 0;
+
+        loop {
+            let question = if infinite {
+                skill.generate_questions(1).first().unwrap().clone()
+            } else {
+                questions.get(question_number as usize).unwrap().clone()
+            };
+
+            let correct = Self::handle_question(&question);
             if correct {
                 println!("Correct!");
             } else {
                 println!("Incorrect!");
             }
+            question_number += 1;
         }
     }
 
@@ -79,5 +85,30 @@ impl Application {
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).unwrap();
         input.trim().to_string()
+    }
+
+    fn print_intro(num_of_questions: u32) {
+        let infinite = num_of_questions == 0;
+        let s = if num_of_questions > 1 || infinite {
+            "s"
+        } else {
+            ""
+        };
+        let num_of_questions = if infinite {
+            "Infinite".to_string()
+        } else {
+            num_of_questions.to_string()
+        };
+
+        println!("{num_of_questions} question{s}. Use Ctrl+C to exit.");
+    }
+
+    fn handle_question(question: &Question) -> bool {
+        println!("\nQ: {}", question.question());
+        print!("A: ");
+        let _ = io::stdout().flush();
+
+        let answer = Self::get_input();
+        question.is_answer_correct(&answer)
     }
 }
