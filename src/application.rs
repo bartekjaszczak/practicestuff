@@ -93,7 +93,7 @@ impl AppImpl {
         let infinite = num_of_questions == 0;
         let mut question_number: u32 = 0;
 
-        loop {
+        while question_number < num_of_questions || infinite {
             let question = if infinite {
                 skill.generate_questions(1).first().unwrap().clone()
             } else {

@@ -52,8 +52,9 @@ Initial list of skills:
 
 ## General
 
-- handling of SIGINT
-- accuracy counter & post-game statistics
+- accuracy counter & post-game statistics (score, acc)
+    - separate module stats
+- timer + timer stats (overall time, time per question, etc)
 - showing stats in between questions
 - handling of on-error behaviour
 - tests for config module

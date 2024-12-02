@@ -1,3 +1,7 @@
+use std::iter;
+
+use rand::prelude::*;
+
 use super::{Question, SkillBase};
 use crate::application::APP_NAME;
 use crate::args::prelude::*;
@@ -16,13 +20,6 @@ pub struct Powers {
     base: u32,
     lower_boundary: u32,
     upper_boundary: u32,
-}
-
-enum OptionType {
-    ShowHelp,
-    Base,
-    LowerBoundary,
-    UpperBoundary,
 }
 
 impl Powers {
@@ -48,6 +45,15 @@ impl Powers {
         if lower_boundary > upper_boundary {
             return Err(Self::build_err_message(Some(
                 "lower boundary must be less than or equal to upper boundary".to_string(),
+            )));
+        }
+
+        // check for power overflow
+        let (_, overflow) = u64::from(base).overflowing_pow(upper_boundary);
+        if overflow {
+            let max_exp = Self::calculate_max_exponent(base, upper_boundary);
+            return Err(Self::build_err_message(Some(
+                        format!("{base}^{upper_boundary} exceeds maximum allowed value. Maximum exponent for base {base} is {max_exp}")
             )));
         }
 
@@ -134,18 +140,41 @@ impl Powers {
         }
     }
 
-    fn generate_question() -> Question {
-        Question::new("Example question", "yes", &[], true)
+    fn generate_question(&self) -> Question {
+        let mut rng = thread_rng();
+        let exp = rng.gen_range(self.lower_boundary..=self.upper_boundary);
+        let result = u64::from(self.base).pow(exp); // Won't overflow, checked during Powers construction
+        Question::new(
+            &format!("{base}^{exp}", base = self.base),
+            &result.to_string(),
+            &[],
+            false,
+        )
+    }
+
+    fn calculate_max_exponent(base: u32, chosen_exponent: u32) -> u32 {
+        let mut low = 0;
+        let mut high = chosen_exponent;
+        let mut max_exp = 0;
+        while low <= high {
+            let mid = low + (high - low) / 2;
+            let (_, overflow) = u64::from(base).overflowing_pow(mid);
+            if overflow {
+                high = mid - 1;
+            } else {
+                max_exp = mid;
+                low = mid + 1;
+            }
+        }
+        max_exp
     }
 }
 
 impl SkillBase for Powers {
     fn generate_questions(&self, count: u32) -> Vec<Question> {
-        let mut questions = Vec::new();
-        for _ in 0..count {
-            questions.push(Self::generate_question());
-        }
-        questions
+        iter::repeat_with(|| self.generate_question())
+            .take(count as usize)
+            .collect()
     }
 
     fn show_help_and_exit(&self) -> bool {
