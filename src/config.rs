@@ -22,7 +22,7 @@ const BEHAVIOUR_ON_ERROR_REPEAT: &str = "repeat";
 #[derive(Debug)]
 pub struct Config {
     pub options: GeneralOptions,
-    pub skill: Option<Box<dyn Skill + Sync>>,
+    pub skill: Option<Box<dyn Skill>>,
 }
 
 impl Config {

@@ -58,18 +58,18 @@ impl ArgDefinition {
 
 #[derive(Default)]
 pub struct ArgDefinitionBuilder {
-    id: Option<String>,
+    id: String,
     short_name: Option<char>,
     long_name: Option<String>,
     description: Vec<String>,
     kind: Option<ArgKindDefinition>,
-    stop_parsing: Option<bool>,
+    stop_parsing: bool,
     default_value: Option<ArgValue>,
 }
 
 impl ArgDefinitionBuilder {
     pub fn id(mut self, id: &str) -> Self {
-        self.id = Some(id.to_string());
+        self.id = id.to_string();
         self
     }
 
@@ -94,7 +94,7 @@ impl ArgDefinitionBuilder {
     }
 
     pub fn stop_parsing(mut self, stop_parsing: bool) -> Self {
-        self.stop_parsing = Some(stop_parsing);
+        self.stop_parsing = stop_parsing;
         self
     }
 
@@ -104,18 +104,19 @@ impl ArgDefinitionBuilder {
     }
 
     pub fn build(self) -> ArgDefinition {
+        assert!(!self.id.is_empty(), "id is required");
         assert!(
             !(self.short_name.is_none() && self.long_name.is_none()),
             "either short or long name is required"
         );
         self.validate_arg_type();
         ArgDefinition {
-            id: self.id.expect("id is required"),
+            id: self.id,
             short_name: self.short_name,
             long_name: self.long_name,
             description: self.description,
             kind: self.kind.expect("kind is required"),
-            stop_parsing: self.stop_parsing.unwrap_or(false),
+            stop_parsing: self.stop_parsing,
             default_value: self.default_value.expect("default value is required"),
         }
     }

@@ -113,7 +113,9 @@ impl AppImpl {
 
     fn get_input() -> String {
         let mut input = String::new();
-        std::io::stdin().read_line(&mut input).unwrap();
+        io::stdin()
+            .read_line(&mut input)
+            .expect("IO operation failed (stdin)");
         input.trim().to_string()
     }
 
@@ -136,7 +138,7 @@ impl AppImpl {
     fn handle_question(question: &Question) -> bool {
         println!("\nQ: {}", question.question());
         print!("A: ");
-        let _ = io::stdout().flush();
+        io::stdout().flush().expect("IO operation failed (flush)");
 
         let answer = Self::get_input();
         question.is_answer_correct(&answer)

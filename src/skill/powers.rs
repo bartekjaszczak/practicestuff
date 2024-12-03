@@ -1,6 +1,6 @@
 use std::iter;
 
-use rand::prelude::*;
+use rand::Rng;
 
 use super::{Question, SkillBase};
 use crate::application::APP_NAME;
@@ -141,15 +141,13 @@ impl Powers {
     }
 
     fn generate_question(&self) -> Question {
-        let mut rng = thread_rng();
+        let mut rng = rand::thread_rng();
         let exp = rng.gen_range(self.lower_boundary..=self.upper_boundary);
         let result = u64::from(self.base).pow(exp); // Won't overflow, checked during Powers construction
-        Question::new(
-            &format!("{base}^{exp}", base = self.base),
-            &result.to_string(),
-            &[],
-            false,
-        )
+        Question::builder()
+            .question(&format!("{base}^{exp}", base = self.base))
+            .answer(&result.to_string())
+            .build()
     }
 
     fn calculate_max_exponent(base: u32, chosen_exponent: u32) -> u32 {

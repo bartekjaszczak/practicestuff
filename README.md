@@ -63,7 +63,6 @@ Initial list of skills:
 
 ## Powers
 
-- question generation w/ options
 - tests
 
 ## Doomsday
