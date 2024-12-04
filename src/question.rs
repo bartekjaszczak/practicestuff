@@ -1,7 +1,7 @@
 use core::panic;
 use std::cell::{Cell, RefCell};
 
-use crate::skill::Skill;
+use crate::{config::NumberOfQuestions, skill::Skill};
 
 #[derive(Clone)]
 pub struct Question {
@@ -75,14 +75,17 @@ impl QuestionBuilder {
 }
 
 pub struct QuestionGenerator<'a> {
-    number_of_questions: u32,
+    number_of_questions: NumberOfQuestions,
     current_question: Cell<u32>,
     skill: &'a dyn Skill,
     cache: RefCell<Option<Vec<Question>>>,
 }
 
 impl<'a> QuestionGenerator<'a> {
-    pub fn new(number_of_questions: u32, skill: &'a dyn Skill) -> QuestionGenerator<'a> {
+    pub fn new(
+        number_of_questions: NumberOfQuestions,
+        skill: &'a dyn Skill,
+    ) -> QuestionGenerator<'a> {
         QuestionGenerator {
             number_of_questions,
             current_question: Cell::new(0),
@@ -92,33 +95,38 @@ impl<'a> QuestionGenerator<'a> {
     }
 
     pub fn next_question(&self) -> Question {
-        if self.number_of_questions == 0 {
-            self.skill
+        match self.number_of_questions {
+            NumberOfQuestions::Infinite => self
+                .skill
                 .generate_questions(1)
                 .first()
                 .expect("Question could not be generated")
-                .clone()
-        } else {
-            self.current_question.set(self.current_question.get() + 1);
-            let mut cache = self.cache.borrow_mut();
-            if cache.is_none() {
-                let questions = self.skill.generate_questions(self.number_of_questions);
-                assert_eq!(
-                    questions.len(),
-                    self.number_of_questions as usize,
-                    "Skill did not generate correct amount of questions"
-                );
-                cache.replace(questions);
-            }
-            if let Some(questions) = cache.as_ref() {
-                questions[(self.current_question.get() - 1) as usize].clone()
-            } else {
-                panic!("Questions could not be generated")
+                .clone(),
+            NumberOfQuestions::Limited(num) => {
+                self.current_question.set(self.current_question.get() + 1);
+                let mut cache = self.cache.borrow_mut();
+                if cache.is_none() {
+                    let questions = self.skill.generate_questions(num);
+                    assert_eq!(
+                        questions.len(),
+                        num as usize,
+                        "Skill did not generate correct amount of questions"
+                    );
+                    cache.replace(questions);
+                }
+                if let Some(questions) = cache.as_ref() {
+                    questions[(self.current_question.get() - 1) as usize].clone()
+                } else {
+                    panic!("Questions could not be generated")
+                }
             }
         }
     }
 
     pub fn has_next_question(&self) -> bool {
-        self.number_of_questions == 0 || self.current_question.get() < self.number_of_questions
+        match self.number_of_questions {
+            NumberOfQuestions::Infinite => true,
+            NumberOfQuestions::Limited(num) => self.current_question.get() < num,
+        }
     }
 }

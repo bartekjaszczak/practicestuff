@@ -19,6 +19,12 @@ const BEHAVIOUR_ON_ERROR_CONTINUE: &str = "continue";
 const BEHAVIOUR_ON_ERROR_SHOW_CORRECT: &str = "showcorrect";
 const BEHAVIOUR_ON_ERROR_REPEAT: &str = "repeat";
 
+#[derive(Debug, Clone, Copy)]
+pub enum NumberOfQuestions {
+    Limited(u32),
+    Infinite,
+}
+
 #[derive(Debug)]
 pub struct Config {
     pub options: GeneralOptions,
@@ -33,10 +39,10 @@ impl Config {
         let (options, command, command_options) = Config::split_args(&args[1..]);
 
         let options = GeneralOptions::build(options);
-        if let Ok(options) = &options {
+        if let Ok(options) = options {
             if options.show_help || options.show_version {
                 return Ok(Self {
-                    options: *options,
+                    options,
                     skill: None,
                 });
             }
@@ -101,12 +107,12 @@ impl BehaviourOnError {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct GeneralOptions {
     pub show_help: bool,
     pub show_version: bool,
 
-    pub number_of_questions: u32,
+    pub number_of_questions: NumberOfQuestions,
     pub disable_live_statistics: bool,
     pub behaviour_on_error: BehaviourOnError,
 }
@@ -125,6 +131,11 @@ impl GeneralOptions {
             &parsed_args,
             &arg_definitions,
         );
+        let number_of_questions = if number_of_questions == 0 {
+            NumberOfQuestions::Infinite
+        } else {
+            NumberOfQuestions::Limited(number_of_questions)
+        };
         let disable_live_statistics = bool::set_value_from_arg_or_default(
             ARG_ID_DISABLE_LIVE_STATISTICS,
             &parsed_args,
@@ -171,7 +182,8 @@ impl GeneralOptions {
                 .short_name('n')
                 .long_name("number-of-questions")
                 .description(vec![
-                    "Specify the number of questions to ask (0 for infinite, default: 20)".to_string(),
+                    "Specify the number of questions to ask (0 for infinite, default: 20)"
+                        .to_string(),
                 ])
                 .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
                 .stop_parsing(false)

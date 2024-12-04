@@ -59,7 +59,6 @@ Initial list of skills:
 - integration tests
 - tests for stats module
 - tests for question module
-- refactor number of questions to mode (Infinite, Limited(u32))
 - move rwlock inside stats
 
 ## Powers

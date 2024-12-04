@@ -4,8 +4,7 @@ use std::process;
 use std::sync::{Arc, RwLock};
 
 use crate::args::prelude::*;
-use crate::config::Config;
-use crate::config::GeneralOptions;
+use crate::config::{Config, NumberOfQuestions, GeneralOptions};
 use crate::question::{Question, QuestionGenerator};
 use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
@@ -81,6 +80,7 @@ impl AppImpl {
     }
 
     fn handle_interrupt(&self) {
+        println!();
         self.print_post_game_stats();
         process::exit(1);
     }
@@ -98,13 +98,12 @@ impl AppImpl {
     }
 
     fn before_game(&self) {
-        let number_of_questions = self.config.options.number_of_questions;
-        Self::print_intro(number_of_questions);
+        self.print_intro();
 
         self.stats
             .write()
             .expect("Stats are blocked")
-            .start(number_of_questions);
+            .start(self.number_of_questions());
     }
 
     fn handle_question(&self, question: &Question) {
@@ -136,20 +135,19 @@ impl AppImpl {
         input.trim().to_string()
     }
 
-    fn print_intro(number_of_questions: u32) {
-        let infinite = number_of_questions == 0;
-        let s = if number_of_questions > 1 || infinite {
-            "s"
-        } else {
-            ""
-        };
-        let number_of_questions = if infinite {
-            "Infinite".to_string()
-        } else {
-            number_of_questions.to_string()
+    fn print_intro(&self) {
+        let number_of_questions = match self.number_of_questions() {
+            NumberOfQuestions::Infinite => "Infinite questions",
+            NumberOfQuestions::Limited(num) => {
+                if num > 1 {
+                    &format!("{num} questions")
+                } else {
+                    "1 question"
+                }
+            }
         };
 
-        println!("{number_of_questions} question{s}. Use Ctrl+C to exit.");
+        println!("{number_of_questions}. Use Ctrl+C to exit.");
     }
 
     fn print_post_game_stats(&self) {
@@ -186,7 +184,7 @@ impl AppImpl {
             .borrow()
     }
 
-    fn number_of_questions(&self) -> u32 {
+    fn number_of_questions(&self) -> NumberOfQuestions {
         self.config.options.number_of_questions
     }
 }

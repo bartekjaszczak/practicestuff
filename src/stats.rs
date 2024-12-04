@@ -1,9 +1,11 @@
 use std::time::{Duration, Instant};
 
+use crate::config::NumberOfQuestions;
+
 const DURATION_ZERO: Duration = Duration::new(0, 0);
 
 pub struct Stats {
-    number_of_questions: u32,
+    number_of_questions: NumberOfQuestions,
     number_of_answered_questions: u32,
     number_of_correct_answers: u32,
     start_time: Instant,
@@ -15,7 +17,7 @@ pub struct Stats {
 impl Stats {
     pub fn new() -> Self {
         Stats {
-            number_of_questions: 0,
+            number_of_questions: NumberOfQuestions::Infinite,
             number_of_answered_questions: 0,
             number_of_correct_answers: 0,
             start_time: Instant::now(),
@@ -25,7 +27,7 @@ impl Stats {
         }
     }
 
-    pub fn start(&mut self, number_of_questions: u32) {
+    pub fn start(&mut self, number_of_questions: NumberOfQuestions) {
         self.number_of_questions = number_of_questions;
         self.start_time = Instant::now();
     }
@@ -54,13 +56,11 @@ impl Stats {
     }
 
     pub fn get_number_of_answered_questions(&self) -> String {
-        if self.in_infinite_mode() {
-            format!("{}", self.number_of_answered_questions)
-        } else {
-            format!(
-                "{}/{}",
-                self.number_of_answered_questions, self.number_of_questions
-            )
+        match self.number_of_questions {
+            NumberOfQuestions::Infinite => format!("{}", self.number_of_answered_questions),
+            NumberOfQuestions::Limited(num) => {
+                format!("{}/{}", self.number_of_answered_questions, num)
+            }
         }
     }
 
@@ -69,19 +69,21 @@ impl Stats {
     }
 
     pub fn get_accuracy(&self) -> String {
-        let acc = if self.in_infinite_mode() {
-            let divisor = self.number_of_answered_questions;
-            if divisor == 0 {
-                0.0
-            } else {
-                f64::from(self.number_of_correct_answers) / f64::from(divisor)
+        let acc = match self.number_of_questions {
+            NumberOfQuestions::Infinite => {
+                let divisor = self.number_of_answered_questions;
+                if divisor == 0 {
+                    0.0
+                } else {
+                    f64::from(self.number_of_correct_answers) / f64::from(divisor)
+                }
             }
-        } else {
-            let divisor = self.number_of_questions;
-            if divisor == 0 {
-                0.0
-            } else {
-                f64::from(self.number_of_correct_answers) / f64::from(divisor)
+            NumberOfQuestions::Limited(num) => {
+                if num == 0 {
+                    0.0
+                } else {
+                    f64::from(self.number_of_correct_answers) / f64::from(num)
+                }
             }
         } * 100.0;
         format!("{acc:.2}%")
@@ -120,10 +122,6 @@ impl Stats {
         } else {
             Self::format_duration(&(total_time / answered_questions))
         }
-    }
-
-    fn in_infinite_mode(&self) -> bool {
-        self.number_of_questions == 0
     }
 
     fn format_duration(duration: &Duration) -> String {
