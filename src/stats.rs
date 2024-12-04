@@ -70,9 +70,19 @@ impl Stats {
 
     pub fn get_accuracy(&self) -> String {
         let acc = if self.in_infinite_mode() {
-            f64::from(self.number_of_correct_answers) / f64::from(self.number_of_answered_questions)
+            let divisor = self.number_of_answered_questions;
+            if divisor == 0 {
+                0.0
+            } else {
+                f64::from(self.number_of_correct_answers) / f64::from(divisor)
+            }
         } else {
-            f64::from(self.number_of_correct_answers) / f64::from(self.number_of_questions)
+            let divisor = self.number_of_questions;
+            if divisor == 0 {
+                0.0
+            } else {
+                f64::from(self.number_of_correct_answers) / f64::from(divisor)
+            }
         } * 100.0;
         format!("{acc:.2}%")
     }
@@ -84,21 +94,32 @@ impl Stats {
     }
 
     pub fn get_min_question_time(&self) -> String {
-        let min_time = self.time_per_question.iter().min().unwrap_or(&DURATION_ZERO);
+        let min_time = self
+            .time_per_question
+            .iter()
+            .min()
+            .unwrap_or(&DURATION_ZERO);
         Self::format_duration(min_time)
     }
 
     pub fn get_max_question_time(&self) -> String {
-        let max_time = self.time_per_question.iter().max().unwrap_or(&DURATION_ZERO);
+        let max_time = self
+            .time_per_question
+            .iter()
+            .max()
+            .unwrap_or(&DURATION_ZERO);
         Self::format_duration(max_time)
     }
 
     pub fn get_avg_question_time(&self) -> String {
         let total_time = self.time_per_question.iter().sum::<Duration>();
-        let avg_time = total_time
-            / u32::try_from(self.time_per_question.len())
-                .expect("Time per question vector len > u32::MAX");
-        Self::format_duration(&avg_time)
+        let answered_questions = u32::try_from(self.time_per_question.len())
+            .expect("Time per question vector len > u32::MAX");
+        if answered_questions == 0 {
+            Self::format_duration(&DURATION_ZERO)
+        } else {
+            Self::format_duration(&(total_time / answered_questions))
+        }
     }
 
     fn in_infinite_mode(&self) -> bool {
@@ -125,7 +146,7 @@ impl Stats {
 
     fn truncate_trailing_zeros(number: u32) -> String {
         let mut number = number.to_string();
-        while number.ends_with('0') {
+        while number.ends_with('0') && number.len() > 1 {
             number.pop();
         }
         number

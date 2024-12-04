@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::io::{self, Write};
 use std::process;
 use std::sync::{Arc, RwLock};
@@ -5,10 +6,11 @@ use std::sync::{Arc, RwLock};
 use crate::args::prelude::*;
 use crate::config::Config;
 use crate::config::GeneralOptions;
+use crate::question::{Question, QuestionGenerator};
 use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
 use crate::skill::times_table;
-use crate::skill::Question;
+use crate::skill::Skill;
 use crate::stats::Stats;
 
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
@@ -45,27 +47,6 @@ impl Application {
     pub(crate) fn help_prompt() -> String {
         format!("Try '{APP_NAME} --help' for more information.")
     }
-}
-
-struct AppImpl {
-    config: Config,
-    stats: RwLock<Stats>,
-}
-
-impl AppImpl {
-    pub fn run(&self) {
-        if self.config.options.show_help {
-            Self::print_help();
-        } else if self.config.options.show_version {
-            Self::print_version();
-        } else if let Some(skill) = &self.config.skill {
-            if skill.show_help_and_exit() {
-                return;
-            }
-        }
-
-        self.play();
-    }
 
     fn print_help() {
         let definitions = &GeneralOptions::get_arg_definitions();
@@ -77,40 +58,74 @@ impl AppImpl {
     fn print_version() {
         println!("{APP_NAME} {VERSION}");
     }
+}
+
+struct AppImpl {
+    config: Config,
+    stats: RwLock<Stats>,
+}
+
+impl AppImpl {
+    pub fn run(&self) {
+        if self.config.options.show_help {
+            Application::print_help();
+        } else if self.config.options.show_version {
+            Application::print_version();
+        } else if let Some(skill) = &self.config.skill {
+            if skill.only_show_help_and_exit() {
+                return;
+            }
+        }
+
+        self.play();
+    }
+
+    fn handle_interrupt(&self) {
+        self.print_post_game_stats();
+        process::exit(1);
+    }
 
     fn play(&self) {
-        let number_of_questions = self.config.options.number_of_questions;
-        let skill = self
-            .config
-            .skill
-            .as_ref()
-            .expect("Skill expected at this point");
-        let questions = skill.generate_questions(number_of_questions);
-        assert_eq!(questions.len(), number_of_questions as usize);
+        let generator = QuestionGenerator::new(self.number_of_questions(), self.get_skill());
 
+        self.before_game();
+
+        while generator.has_next_question() {
+            self.handle_question(&generator.next_question());
+        }
+
+        self.print_post_game_stats();
+    }
+
+    fn before_game(&self) {
+        let number_of_questions = self.config.options.number_of_questions;
         Self::print_intro(number_of_questions);
 
-        let infinite = number_of_questions == 0;
-        let mut question_number: u32 = 0;
-        // Below call should be the only thing locking stats for write
         self.stats
             .write()
             .expect("Stats are blocked")
             .start(number_of_questions);
+    }
 
-        while question_number < number_of_questions || infinite {
-            let question = if infinite {
-                skill.generate_questions(1).first().unwrap().clone()
-            } else {
-                questions.get(question_number as usize).unwrap().clone()
-            };
+    fn handle_question(&self, question: &Question) {
+        println!("\nQ: {}", question.question());
+        print!("A: ");
+        io::stdout().flush().expect("IO operation failed (flush)");
 
-            self.handle_question(&question);
+        self.stats
+            .write()
+            .expect("Stats are blocked")
+            .start_new_question();
 
-            question_number += 1;
-        }
+        let answer = Self::get_input();
+        let correct = question.is_answer_correct(&answer);
 
-        self.show_post_game_stats();
+        self.stats
+            .write()
+            .expect("Stats are blocked")
+            .answer_question(correct);
+
+        Self::print_answer_feedback(correct);
     }
 
     fn get_input() -> String {
@@ -137,34 +152,10 @@ impl AppImpl {
         println!("{number_of_questions} question{s}. Use Ctrl+C to exit.");
     }
 
-    fn handle_question(&self, question: &Question) {
-        println!("\nQ: {}", question.question());
-        print!("A: ");
-        io::stdout().flush().expect("IO operation failed (flush)");
-
-        self.stats
-            .write()
-            .expect("Stats are blocked")
-            .start_new_question();
-        let answer = Self::get_input();
-        let correct = question.is_answer_correct(&answer);
-        self.stats
-            .write()
-            .expect("Stats are blocked")
-            .answer_question(correct);
-
-        Self::show_answer_feedback(correct);
-    }
-
-    fn handle_interrupt(&self) {
-        self.show_post_game_stats();
-        process::exit(1);
-    }
-
-    fn show_post_game_stats(&self) {
+    fn print_post_game_stats(&self) {
         if let Ok(stats) = self.stats.try_read() {
             println!(
-                "\nAnswered questions: {}",
+                "\nQuestions answered: {}",
                 stats.get_number_of_answered_questions()
             );
             println!("Correct answers: {}", stats.get_number_of_correct_answers());
@@ -179,11 +170,23 @@ impl AppImpl {
         }
     }
 
-    fn show_answer_feedback(correct: bool) {
+    fn print_answer_feedback(correct: bool) {
         if correct {
             println!("Correct!");
         } else {
             println!("Incorrect!");
         }
+    }
+
+    fn get_skill(&self) -> &dyn Skill {
+        self.config
+            .skill
+            .as_ref()
+            .expect("Skill expected at this point")
+            .borrow()
+    }
+
+    fn number_of_questions(&self) -> u32 {
+        self.config.options.number_of_questions
     }
 }

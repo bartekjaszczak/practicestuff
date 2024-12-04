@@ -52,13 +52,15 @@ Initial list of skills:
 
 ## General
 
-- refactor the play() method
 - showing stats in between questions
 - handling of on-error behaviour
 - tests for config module
 - tests for skill module
 - integration tests
 - tests for stats module
+- tests for question module
+- refactor number of questions to mode (Infinite, Limited(u32))
+- move rwlock inside stats
 
 ## Powers
 

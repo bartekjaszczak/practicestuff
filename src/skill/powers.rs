@@ -2,7 +2,8 @@ use std::iter;
 
 use rand::Rng;
 
-use super::{Question, SkillBase};
+use super::SkillBase;
+use crate::question::Question;
 use crate::application::APP_NAME;
 use crate::args::prelude::*;
 
@@ -175,7 +176,7 @@ impl SkillBase for Powers {
             .collect()
     }
 
-    fn show_help_and_exit(&self) -> bool {
+    fn only_show_help_and_exit(&self) -> bool {
         if self.show_help {
             Self::print_help();
             return true;
