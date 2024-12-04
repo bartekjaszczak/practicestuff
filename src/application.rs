@@ -1,16 +1,16 @@
 use std::borrow::Borrow;
 use std::io::{self, Write};
 use std::process;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use crate::args::prelude::*;
-use crate::config::{Config, NumberOfQuestions, GeneralOptions};
+use crate::config::{Config, GeneralOptions, NumberOfQuestions};
 use crate::question::{Question, QuestionGenerator};
 use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
 use crate::skill::times_table;
 use crate::skill::Skill;
-use crate::stats::Stats;
+use crate::stats::StatsLock;
 
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -27,7 +27,7 @@ impl Application {
     pub fn run(config: Config) {
         let app = Arc::new(AppImpl {
             config,
-            stats: RwLock::new(Stats::new()),
+            stats: StatsLock::new(),
         });
 
         let app_ref = app.clone();
@@ -61,7 +61,7 @@ impl Application {
 
 struct AppImpl {
     config: Config,
-    stats: RwLock<Stats>,
+    stats: StatsLock,
 }
 
 impl AppImpl {
@@ -100,10 +100,7 @@ impl AppImpl {
     fn before_game(&self) {
         self.print_intro();
 
-        self.stats
-            .write()
-            .expect("Stats are blocked")
-            .start(self.number_of_questions());
+        self.stats.start(self.number_of_questions());
     }
 
     fn handle_question(&self, question: &Question) {
@@ -111,18 +108,12 @@ impl AppImpl {
         print!("A: ");
         io::stdout().flush().expect("IO operation failed (flush)");
 
-        self.stats
-            .write()
-            .expect("Stats are blocked")
-            .start_new_question();
+        self.stats.start_new_question();
 
         let answer = Self::get_input();
         let correct = question.is_answer_correct(&answer);
 
-        self.stats
-            .write()
-            .expect("Stats are blocked")
-            .answer_question(correct);
+        self.stats.answer_question(correct);
 
         Self::print_answer_feedback(correct);
     }
@@ -151,21 +142,20 @@ impl AppImpl {
     }
 
     fn print_post_game_stats(&self) {
-        if let Ok(stats) = self.stats.try_read() {
-            println!(
-                "\nQuestions answered: {}",
-                stats.get_number_of_answered_questions()
-            );
-            println!("Correct answers: {}", stats.get_number_of_correct_answers());
-            println!("Accuracy: {}", stats.get_accuracy());
-            println!("Total time: {}", stats.get_total_time());
-            println!("Time taken per question:");
-            println!("  min: {}", stats.get_min_question_time());
-            println!("  max: {}", stats.get_max_question_time());
-            println!("  avg: {}", stats.get_avg_question_time());
-        } else {
-            println!("\nUnable to show statistics");
-        }
+        println!(
+            "\nQuestions answered: {}",
+            self.stats.get_number_of_answered_questions()
+        );
+        println!(
+            "Correct answers: {}",
+            self.stats.get_number_of_correct_answers()
+        );
+        println!("Accuracy: {}", self.stats.get_accuracy());
+        println!("Total time: {}", self.stats.get_total_time());
+        println!("Time taken per question:");
+        println!("  min: {}", self.stats.get_min_question_time());
+        println!("  max: {}", self.stats.get_max_question_time());
+        println!("  avg: {}", self.stats.get_avg_question_time());
     }
 
     fn print_answer_feedback(correct: bool) {

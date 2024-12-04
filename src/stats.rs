@@ -1,10 +1,80 @@
+use std::sync::{RwLock, RwLockWriteGuard, RwLockReadGuard};
 use std::time::{Duration, Instant};
 
 use crate::config::NumberOfQuestions;
 
 const DURATION_ZERO: Duration = Duration::new(0, 0);
 
-pub struct Stats {
+pub struct StatsLock {
+    stats: RwLock<Stats>,
+}
+
+impl StatsLock {
+    pub fn new() -> Self {
+        Self {
+            stats: RwLock::new(Stats {
+                number_of_questions: NumberOfQuestions::Infinite,
+                number_of_answered_questions: 0,
+                number_of_correct_answers: 0,
+                start_time: Instant::now(),
+                current_question_start_time: Instant::now(),
+                current_question_answered: false,
+                time_per_question: vec![],
+            }),
+        }
+    }
+
+    pub fn start(&self, number_of_questions: NumberOfQuestions) {
+        self.write().start(number_of_questions);
+    }
+
+    pub fn start_new_question(&self) {
+        self.write().start_new_question();
+    }
+
+    pub fn answer_question(&self, correct: bool) {
+        self.write().answer_question(correct);
+    }
+
+    pub fn get_number_of_answered_questions(&self) -> String {
+        self.read().get_number_of_answered_questions()
+    }
+
+    pub fn get_number_of_correct_answers(&self) -> String {
+        self.read().get_number_of_correct_answers()
+    }
+
+    pub fn get_accuracy(&self) -> String {
+        self.read().get_accuracy()
+    }
+
+    /// Preferably call this method first to stop the timer as early as possible
+    pub fn get_total_time(&self) -> String {
+        self.read().get_total_time()
+    }
+
+    pub fn get_min_question_time(&self) -> String {
+        self.read().get_min_question_time()
+    }
+
+    pub fn get_max_question_time(&self) -> String {
+        self.read().get_max_question_time()
+    }
+
+    pub fn get_avg_question_time(&self) -> String {
+        self.read().get_avg_question_time()
+    }
+
+    fn write(&self) -> RwLockWriteGuard<Stats> {
+        self.stats.write().expect("Stats are blocked")
+    }
+
+    fn read(&self) -> RwLockReadGuard<Stats> {
+        self.stats.read().expect("Stats are blocked")
+    }
+}
+
+struct Stats {
     number_of_questions: NumberOfQuestions,
     number_of_answered_questions: u32,
     number_of_correct_answers: u32,
@@ -15,18 +85,6 @@ pub struct Stats {
 }
 
 impl Stats {
-    pub fn new() -> Self {
-        Stats {
-            number_of_questions: NumberOfQuestions::Infinite,
-            number_of_answered_questions: 0,
-            number_of_correct_answers: 0,
-            start_time: Instant::now(),
-            current_question_start_time: Instant::now(),
-            current_question_answered: false,
-            time_per_question: vec![],
-        }
-    }
-
     pub fn start(&mut self, number_of_questions: NumberOfQuestions) {
         self.number_of_questions = number_of_questions;
         self.start_time = Instant::now();
@@ -89,7 +147,6 @@ impl Stats {
         format!("{acc:.2}%")
     }
 
-    /// Preferably call this method first to stop the timer as early as possible
     pub fn get_total_time(&self) -> String {
         let total_time = self.start_time.elapsed();
         Self::format_duration(&total_time)

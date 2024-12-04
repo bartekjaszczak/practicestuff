@@ -59,7 +59,6 @@ Initial list of skills:
 - integration tests
 - tests for stats module
 - tests for question module
-- move rwlock inside stats
 
 ## Powers
 
