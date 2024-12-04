@@ -1,7 +1,6 @@
 use std::io::{self, Write};
 use std::process;
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use crate::args::prelude::*;
 use crate::config::Config;
@@ -10,6 +9,7 @@ use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
 use crate::skill::times_table;
 use crate::skill::Question;
+use crate::stats::Stats;
 
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -26,7 +26,7 @@ impl Application {
     pub fn run(config: Config) {
         let app = Arc::new(AppImpl {
             config,
-            score: AtomicU32::new(0),
+            stats: RwLock::new(Stats::new()),
         });
 
         let app_ref = app.clone();
@@ -49,7 +49,7 @@ impl Application {
 
 struct AppImpl {
     config: Config,
-    score: AtomicU32,
+    stats: RwLock<Stats>,
 }
 
 impl AppImpl {
@@ -79,36 +79,38 @@ impl AppImpl {
     }
 
     fn play(&self) {
-        let num_of_questions = self.config.options.number_of_questions;
+        let number_of_questions = self.config.options.number_of_questions;
         let skill = self
             .config
             .skill
             .as_ref()
             .expect("Skill expected at this point");
-        let questions = skill.generate_questions(num_of_questions);
-        assert_eq!(questions.len(), num_of_questions as usize);
+        let questions = skill.generate_questions(number_of_questions);
+        assert_eq!(questions.len(), number_of_questions as usize);
 
-        Self::print_intro(num_of_questions);
+        Self::print_intro(number_of_questions);
 
-        let infinite = num_of_questions == 0;
+        let infinite = number_of_questions == 0;
         let mut question_number: u32 = 0;
+        // Below call should be the only thing locking stats for write
+        self.stats
+            .write()
+            .expect("Stats are blocked")
+            .start(number_of_questions);
 
-        while question_number < num_of_questions || infinite {
+        while question_number < number_of_questions || infinite {
             let question = if infinite {
                 skill.generate_questions(1).first().unwrap().clone()
             } else {
                 questions.get(question_number as usize).unwrap().clone()
             };
 
-            let correct = Self::handle_question(&question);
-            if correct {
-                println!("Correct!");
-                self.score.fetch_add(1, Ordering::Relaxed);
-            } else {
-                println!("Incorrect!");
-            }
+            self.handle_question(&question);
+
             question_number += 1;
         }
+
+        self.show_post_game_stats();
     }
 
     fn get_input() -> String {
@@ -119,37 +121,69 @@ impl AppImpl {
         input.trim().to_string()
     }
 
-    fn print_intro(num_of_questions: u32) {
-        let infinite = num_of_questions == 0;
-        let s = if num_of_questions > 1 || infinite {
+    fn print_intro(number_of_questions: u32) {
+        let infinite = number_of_questions == 0;
+        let s = if number_of_questions > 1 || infinite {
             "s"
         } else {
             ""
         };
-        let num_of_questions = if infinite {
+        let number_of_questions = if infinite {
             "Infinite".to_string()
         } else {
-            num_of_questions.to_string()
+            number_of_questions.to_string()
         };
 
-        println!("{num_of_questions} question{s}. Use Ctrl+C to exit.");
+        println!("{number_of_questions} question{s}. Use Ctrl+C to exit.");
     }
 
-    fn handle_question(question: &Question) -> bool {
+    fn handle_question(&self, question: &Question) {
         println!("\nQ: {}", question.question());
         print!("A: ");
         io::stdout().flush().expect("IO operation failed (flush)");
 
+        self.stats
+            .write()
+            .expect("Stats are blocked")
+            .start_new_question();
         let answer = Self::get_input();
-        question.is_answer_correct(&answer)
+        let correct = question.is_answer_correct(&answer);
+        self.stats
+            .write()
+            .expect("Stats are blocked")
+            .answer_question(correct);
+
+        Self::show_answer_feedback(correct);
     }
 
     fn handle_interrupt(&self) {
-        // println!(
-        //     "\nHandling interrupt, score: {}",
-        //     self.score.load(Ordering::Relaxed)
-        // );
-        println!("\nExiting...");
+        self.show_post_game_stats();
         process::exit(1);
+    }
+
+    fn show_post_game_stats(&self) {
+        if let Ok(stats) = self.stats.try_read() {
+            println!(
+                "\nAnswered questions: {}",
+                stats.get_number_of_answered_questions()
+            );
+            println!("Correct answers: {}", stats.get_number_of_correct_answers());
+            println!("Accuracy: {}", stats.get_accuracy());
+            println!("Total time: {}", stats.get_total_time());
+            println!("Time taken per question:");
+            println!("  min: {}", stats.get_min_question_time());
+            println!("  max: {}", stats.get_max_question_time());
+            println!("  avg: {}", stats.get_avg_question_time());
+        } else {
+            println!("\nUnable to show statistics");
+        }
+    }
+
+    fn show_answer_feedback(correct: bool) {
+        if correct {
+            println!("Correct!");
+        } else {
+            println!("Incorrect!");
+        }
     }
 }

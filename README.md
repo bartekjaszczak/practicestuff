@@ -52,14 +52,13 @@ Initial list of skills:
 
 ## General
 
-- accuracy counter & post-game statistics (score, acc)
-    - separate module stats
-- timer + timer stats (overall time, time per question, etc)
+- refactor the play() method
 - showing stats in between questions
 - handling of on-error behaviour
 - tests for config module
 - tests for skill module
 - integration tests
+- tests for stats module
 
 ## Powers
 
@@ -81,3 +80,4 @@ Initial list of skills:
 
 - coloured output (termcolor?)
 - additional mode (as many answers in given time)
+- multiple texts for "correct" and "incorrect" answers
