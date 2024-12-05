@@ -20,6 +20,10 @@ impl Question {
         &self.question
     }
 
+    pub fn correct_answer(&self) -> &String {
+        &self.answer
+    }
+
     pub fn is_answer_correct(&self, answer: &String) -> bool {
         if self.allow_any_case {
             answer.to_ascii_lowercase() == self.answer.to_ascii_lowercase()

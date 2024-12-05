@@ -4,7 +4,7 @@ use std::process;
 use std::sync::Arc;
 
 use crate::args::prelude::*;
-use crate::config::{Config, GeneralOptions, NumberOfQuestions};
+use crate::config::{BehaviourOnError, Config, GeneralOptions, NumberOfQuestions};
 use crate::question::{Question, QuestionGenerator};
 use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
@@ -110,12 +110,22 @@ impl AppImpl {
 
         self.stats.start_new_question();
 
-        let answer = Self::get_input();
-        let correct = question.is_answer_correct(&answer);
+        let mut answer = Self::get_input();
+        let mut correct = question.is_answer_correct(&answer);
 
         self.stats.answer_question(correct);
+        self.print_answer_feedback(correct, &question.correct_answer());
 
-        Self::print_answer_feedback(correct);
+        if let BehaviourOnError::Repeat = self.config.options.behaviour_on_error {
+            while !correct {
+                print!("A: ");
+                io::stdout().flush().expect("IO operation failed (flush)");
+                answer = Self::get_input();
+                correct = question.is_answer_correct(&answer);
+                self.stats.answer_question(correct);
+                self.print_answer_feedback(correct, &question.correct_answer());
+            }
+        }
 
         if !self.config.options.disable_live_statistics {
             self.print_stats_in_between();
@@ -200,12 +210,24 @@ impl AppImpl {
         println!("  avg: {}", self.stats.get_avg_question_time());
     }
 
-    fn print_answer_feedback(correct: bool) {
+    fn print_answer_feedback(&self, correct: bool, correct_answer: &str) {
+        let mut feedback = String::new();
         if correct {
-            println!("Correct!");
+            feedback.push_str("Correct!");
         } else {
-            println!("Incorrect!");
+            feedback.push_str("Incorrect!");
+            match self.config.options.behaviour_on_error {
+                BehaviourOnError::ShowCorrect => {
+                    feedback.push_str(&format!(" Correct answer: {correct_answer}"));
+                }
+                BehaviourOnError::Repeat => feedback.push_str(" Try again:"),
+                BehaviourOnError::NextQuestion => (),
+            }
+            if let BehaviourOnError::ShowCorrect = self.config.options.behaviour_on_error {
+                feedback.push_str(&format!(" Correct answer: {correct_answer}"));
+            }
         }
+        println!("{feedback}");
     }
 
     fn get_skill(&self) -> &dyn Skill {

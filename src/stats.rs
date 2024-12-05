@@ -125,6 +125,7 @@ impl Stats {
             if correct {
                 self.number_of_correct_answers += 1;
             }
+            self.current_question_answered = true;
         }
     }
 

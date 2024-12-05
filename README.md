@@ -47,7 +47,6 @@ Initial list of skills:
 
 ## General
 
-- handling of on-error behaviour
 - tests for config module
 - tests for skill module
 - integration tests
