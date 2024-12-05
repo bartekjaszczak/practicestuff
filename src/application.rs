@@ -81,7 +81,7 @@ impl AppImpl {
 
     fn handle_interrupt(&self) {
         println!();
-        self.print_post_game_stats();
+        self.print_stats_post_game();
         process::exit(1);
     }
 
@@ -94,7 +94,7 @@ impl AppImpl {
             self.handle_question(&generator.next_question());
         }
 
-        self.print_post_game_stats();
+        self.print_stats_post_game();
     }
 
     fn before_game(&self) {
@@ -116,6 +116,10 @@ impl AppImpl {
         self.stats.answer_question(correct);
 
         Self::print_answer_feedback(correct);
+
+        if !self.config.options.disable_live_statistics {
+            self.print_stats_in_between();
+        }
     }
 
     fn get_input() -> String {
@@ -141,16 +145,54 @@ impl AppImpl {
         println!("{number_of_questions}. Use Ctrl+C to exit.");
     }
 
-    fn print_post_game_stats(&self) {
-        println!(
-            "\nQuestions answered: {}",
-            self.stats.get_number_of_answered_questions()
-        );
+    fn print_stats_in_between(&self) {
+        match self.number_of_questions() {
+            NumberOfQuestions::Infinite => println!(
+                "Time taken: {}, current accuracy: {} ({})",
+                self.stats.get_last_question_time(),
+                self.stats.get_current_accuracy(),
+                self.stats.get_number_of_correct_answers(),
+            ),
+            NumberOfQuestions::Limited(_) => println!(
+                "Time taken: {}, current accuracy: {} ({}), questions left: {}",
+                self.stats.get_last_question_time(),
+                self.stats.get_current_accuracy(),
+                self.stats.get_number_of_correct_answers(),
+                self.stats.get_number_of_remaining_questions(),
+            ),
+        }
+    }
+
+    fn print_stats_post_game(&self) {
+        self.print_summary();
+        self.print_time_stats();
+    }
+
+    fn print_summary(&self) {
+        println!("\n{}", self.stats.get_summary());
         println!(
             "Correct answers: {}",
             self.stats.get_number_of_correct_answers()
         );
-        println!("Accuracy: {}", self.stats.get_accuracy());
+        match self.number_of_questions() {
+            NumberOfQuestions::Infinite => {
+                println!("Accuracy: {}", self.stats.get_current_accuracy());
+            }
+            NumberOfQuestions::Limited(_) => {
+                if self.stats.get_number_of_remaining_questions() == 0 {
+                    println!("Accuracy: {}", self.stats.get_total_accuracy());
+                } else {
+                    println!(
+                        "Accuracy: {} (total accuracy: {})",
+                        self.stats.get_current_accuracy(),
+                        self.stats.get_total_accuracy()
+                    );
+                }
+            }
+        }
+    }
+
+    fn print_time_stats(&self) {
         println!("Total time: {}", self.stats.get_total_time());
         println!("Time taken per question:");
         println!("  min: {}", self.stats.get_min_question_time());

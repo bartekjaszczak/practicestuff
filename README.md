@@ -43,16 +43,10 @@ Initial list of skills:
 
 - Option to set start and end date (default: ±100 years 80% of the time, ±400 years 20% of the time; or normal distribution)
 
-## Improvement ideas
-
-- time mode (e.g. x guesses in certain amount of time)
-- colourful output
-
 # TODO
 
 ## General
 
-- showing stats in between questions
 - handling of on-error behaviour
 - tests for config module
 - tests for skill module
@@ -78,6 +72,6 @@ Initial list of skills:
 
 ## Improvements
 
-- coloured output (termcolor?)
+- coloured output (termcolor?) with --no-color option
 - additional mode (as many answers in given time)
 - multiple texts for "correct" and "incorrect" answers

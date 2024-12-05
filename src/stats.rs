@@ -1,4 +1,4 @@
-use std::sync::{RwLock, RwLockWriteGuard, RwLockReadGuard};
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::time::{Duration, Instant};
 
 use crate::config::NumberOfQuestions;
@@ -36,21 +36,36 @@ impl StatsLock {
         self.write().answer_question(correct);
     }
 
-    pub fn get_number_of_answered_questions(&self) -> String {
-        self.read().get_number_of_answered_questions()
+    pub fn get_summary(&self) -> String {
+        self.read().get_summary()
     }
 
     pub fn get_number_of_correct_answers(&self) -> String {
         self.read().get_number_of_correct_answers()
     }
 
-    pub fn get_accuracy(&self) -> String {
-        self.read().get_accuracy()
+    pub fn get_number_of_remaining_questions(&self) -> u32 {
+        self.read().get_number_of_remaining_questions()
+    }
+
+    /// Calculates accuracy. Takes into account total number of questions.
+    /// Returns "0.00" for Infinite mode.
+    pub fn get_total_accuracy(&self) -> String {
+        self.read().get_total_accuracy()
+    }
+
+    /// Calculates accuracy. Takes into account questions answered so far.
+    pub fn get_current_accuracy(&self) -> String {
+        self.read().get_current_accuracy()
     }
 
     /// Preferably call this method first to stop the timer as early as possible
     pub fn get_total_time(&self) -> String {
         self.read().get_total_time()
+    }
+
+    pub fn get_last_question_time(&self) -> String {
+        self.read().get_last_question_time()
     }
 
     pub fn get_min_question_time(&self) -> String {
@@ -113,36 +128,60 @@ impl Stats {
         }
     }
 
-    pub fn get_number_of_answered_questions(&self) -> String {
+    // Infinite:
+    //   Summary: answered a total of {} questions
+    //   current: correct/answers_so_far
+    //
+    // Limited:
+    //   Summary: total: total, answered: answers_so_far, skipped: remaining questions
+    //   current: correct/answers_so_far
+
+    pub fn get_summary(&self) -> String {
         match self.number_of_questions {
-            NumberOfQuestions::Infinite => format!("{}", self.number_of_answered_questions),
-            NumberOfQuestions::Limited(num) => {
-                format!("{}/{}", self.number_of_answered_questions, num)
+            NumberOfQuestions::Infinite => {
+                format!("Questions total: {}", self.number_of_answered_questions)
             }
+            NumberOfQuestions::Limited(total) => format!(
+                "Questions total: {}, answers: {}, skipped: {}",
+                total,
+                self.number_of_answered_questions,
+                self.get_number_of_remaining_questions()
+            ),
         }
     }
 
     pub fn get_number_of_correct_answers(&self) -> String {
-        format!("{}", self.number_of_correct_answers)
+        format!(
+            "{}/{}",
+            self.number_of_correct_answers, self.number_of_answered_questions
+        )
     }
 
-    pub fn get_accuracy(&self) -> String {
-        let acc = match self.number_of_questions {
-            NumberOfQuestions::Infinite => {
-                let divisor = self.number_of_answered_questions;
-                if divisor == 0 {
-                    0.0
-                } else {
-                    f64::from(self.number_of_correct_answers) / f64::from(divisor)
-                }
-            }
-            NumberOfQuestions::Limited(num) => {
-                if num == 0 {
-                    0.0
-                } else {
-                    f64::from(self.number_of_correct_answers) / f64::from(num)
-                }
-            }
+    pub fn get_number_of_remaining_questions(&self) -> u32 {
+        match self.number_of_questions {
+            NumberOfQuestions::Infinite => 0,
+            NumberOfQuestions::Limited(total) => total - self.number_of_answered_questions,
+        }
+    }
+
+    pub fn get_total_accuracy(&self) -> String {
+        let divisor = match self.number_of_questions {
+            NumberOfQuestions::Infinite => 0,
+            NumberOfQuestions::Limited(num) => num,
+        };
+        self.get_accuracy(divisor)
+    }
+
+    pub fn get_current_accuracy(&self) -> String {
+        let divisor = self.number_of_answered_questions;
+        self.get_accuracy(divisor)
+    }
+
+    fn get_accuracy(&self, divisor: u32) -> String {
+        let acc = if divisor == 0 {
+            0.0
+        } else {
+            f64::from(self.number_of_correct_answers) / f64::from(divisor)
         } * 100.0;
         format!("{acc:.2}%")
     }
@@ -150,6 +189,14 @@ impl Stats {
     pub fn get_total_time(&self) -> String {
         let total_time = self.start_time.elapsed();
         Self::format_duration(&total_time)
+    }
+
+    pub fn get_last_question_time(&self) -> String {
+        let time = self
+            .time_per_question
+            .last()
+            .expect("No questions answered so far");
+        Self::format_duration(time)
     }
 
     pub fn get_min_question_time(&self) -> String {
