@@ -9,7 +9,8 @@ use super::question::Question;
 
 
 pub trait SkillBase {
-    fn only_show_help_and_exit(&self) -> bool;
+    fn wants_to_print_help(&self) -> bool;
+    fn get_help_text(&self) -> String;
     fn generate_questions(&self, count: u32) -> Vec<Question>;
 }
 

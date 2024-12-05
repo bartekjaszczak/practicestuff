@@ -52,10 +52,11 @@ Initial list of skills:
 - integration tests
 - tests for stats module
 - tests for question module
+- add help examples (including showing skill help)
 
 ## Powers
 
-- tests
+DONE
 
 ## Doomsday
 

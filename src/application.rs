@@ -71,7 +71,8 @@ impl AppImpl {
         } else if self.config.options.show_version {
             Application::print_version();
         } else if let Some(skill) = &self.config.skill {
-            if skill.only_show_help_and_exit() {
+            if skill.wants_to_print_help() {
+                println!("{}", skill.get_help_text());
                 return;
             }
         }
