@@ -53,6 +53,8 @@ Initial list of skills:
 - tests for stats module
 - tests for question module
 - add help examples (including showing skill help)
+- address all clippy's warnings
+- organise includes (std, external, internal, relative)
 
 ## Powers
 

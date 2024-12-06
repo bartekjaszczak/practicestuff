@@ -182,8 +182,6 @@ impl SkillBase for Powers {
 
 #[cfg(test)]
 mod tests {
-    use crate::question;
-
     use super::*;
 
     #[test]
@@ -276,7 +274,7 @@ mod tests {
         let question = powers.generate_question();
         assert_eq!(question.question(), "2^1");
         assert_eq!(question.correct_answer(), "2");
-        assert!(question.is_answer_correct(&"2".to_string()));
+        assert!(question.is_answer_correct("2"));
     }
 
     #[test]

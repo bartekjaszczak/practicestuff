@@ -92,7 +92,11 @@ impl AppImpl {
         self.before_game();
 
         while generator.has_next_question() {
-            self.handle_question(&generator.next_question());
+            self.handle_question(
+                &generator
+                    .next_question()
+                    .expect("next_question called even though there were no questions left"),
+            );
         }
 
         self.print_stats_post_game();
@@ -115,7 +119,7 @@ impl AppImpl {
         let mut correct = question.is_answer_correct(&answer);
 
         self.stats.answer_question(correct);
-        self.print_answer_feedback(correct, &question.correct_answer());
+        self.print_answer_feedback(correct, question.correct_answer());
 
         if let BehaviourOnError::Repeat = self.config.options.behaviour_on_error {
             while !correct {
@@ -124,7 +128,7 @@ impl AppImpl {
                 answer = Self::get_input();
                 correct = question.is_answer_correct(&answer);
                 self.stats.answer_question(correct);
-                self.print_answer_feedback(correct, &question.correct_answer());
+                self.print_answer_feedback(correct, question.correct_answer());
             }
         }
 

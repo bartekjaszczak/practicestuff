@@ -1,5 +1,7 @@
-use core::panic;
-use std::cell::{Cell, RefCell};
+use std::{
+    borrow::Borrow,
+    cell::{Cell, RefCell},
+};
 
 use crate::{config::NumberOfQuestions, skill::Skill};
 
@@ -24,7 +26,7 @@ impl Question {
         &self.answer
     }
 
-    pub fn is_answer_correct(&self, answer: &String) -> bool {
+    pub fn is_answer_correct(&self, answer: &str) -> bool {
         if self.allow_any_case {
             answer.to_ascii_lowercase() == self.answer.to_ascii_lowercase()
                 || self
@@ -32,7 +34,7 @@ impl Question {
                     .iter()
                     .any(|elem| answer.to_ascii_lowercase() == elem.to_ascii_lowercase())
         } else {
-            answer.as_str() == self.answer || self.alternative_answers.contains(answer)
+            answer == self.answer || self.alternative_answers.contains(&answer.to_string())
         }
     }
 }
@@ -98,14 +100,14 @@ impl<'a> QuestionGenerator<'a> {
         }
     }
 
-    pub fn next_question(&self) -> Question {
+    pub fn next_question(&self) -> Result<Question, String> {
         match self.number_of_questions {
-            NumberOfQuestions::Infinite => self
+            NumberOfQuestions::Infinite => Ok(self
                 .skill
                 .generate_questions(1)
                 .first()
                 .expect("Question could not be generated")
-                .clone(),
+                .clone()),
             NumberOfQuestions::Limited(num) => {
                 self.current_question.set(self.current_question.get() + 1);
                 let mut cache = self.cache.borrow_mut();
@@ -119,7 +121,11 @@ impl<'a> QuestionGenerator<'a> {
                     cache.replace(questions);
                 }
                 if let Some(questions) = cache.as_ref() {
-                    questions[(self.current_question.get() - 1) as usize].clone()
+                    if self.current_question.get() as usize > questions.len() {
+                        Err("No questions left".to_string())
+                    } else {
+                        Ok(questions[(self.current_question.get() - 1) as usize].clone())
+                    }
                 } else {
                     panic!("Questions could not be generated")
                 }
@@ -132,5 +138,208 @@ impl<'a> QuestionGenerator<'a> {
             NumberOfQuestions::Infinite => true,
             NumberOfQuestions::Limited(num) => self.current_question.get() < num,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{fmt::Debug, sync::RwLock};
+
+    use crate::skill::SkillBase;
+
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "cannot be empty")]
+    fn question_must_have_question_and_answer() {
+        Question::builder().build();
+    }
+
+    #[test]
+    #[should_panic(expected = "Answer cannot be empty")]
+    fn question_must_have_answer() {
+        Question::builder().question("Question").build();
+    }
+
+    #[test]
+    #[should_panic(expected = "Question cannot be empty")]
+    fn question_must_have_question() {
+        Question::builder().answer("Answer").build();
+    }
+
+    #[test]
+    fn question_builder() {
+        let question = Question::builder()
+            .question("Question")
+            .answer("Answer")
+            .alternative_answers(&["Alt1".to_string(), "Alt2".to_string()])
+            .allow_any_case(true)
+            .build();
+
+        assert_eq!(question.question, "Question");
+        assert_eq!(question.answer, "Answer");
+        assert_eq!(
+            question.alternative_answers,
+            vec!["Alt1".to_string(), "Alt2".to_string()]
+        );
+        assert!(question.allow_any_case);
+    }
+
+    #[test]
+    fn returns_question_and_answer() {
+        let question = Question::builder()
+            .question("Question")
+            .answer("Answer")
+            .build();
+
+        assert_eq!(question.question(), "Question");
+        assert_eq!(question.correct_answer(), "Answer");
+    }
+
+    #[test]
+    fn answer_verification() {
+        let question = Question::builder()
+            .question("Question")
+            .answer("Answer")
+            .build();
+
+        assert!(question.is_answer_correct("Answer"));
+        assert!(!question.is_answer_correct("Wrong"));
+
+        let question = Question::builder()
+            .question("Question")
+            .answer("Answer")
+            .alternative_answers(&["Alt1".to_string(), "Alt2".to_string()])
+            .build();
+
+        assert!(question.is_answer_correct("Answer"));
+        assert!(question.is_answer_correct("Alt1"));
+        assert!(question.is_answer_correct("Alt2"));
+        assert!(!question.is_answer_correct("Alt3"));
+        assert!(!question.is_answer_correct("alt1"));
+        assert!(!question.is_answer_correct("answer"));
+
+        let question = Question::builder()
+            .question("Question")
+            .answer("Answer")
+            .alternative_answers(&["Alt1".to_string(), "Alt2".to_string()])
+            .allow_any_case(true)
+            .build();
+
+        assert!(question.is_answer_correct("Answer"));
+        assert!(question.is_answer_correct("Alt1"));
+        assert!(question.is_answer_correct("Alt2"));
+        assert!(!question.is_answer_correct("Alt3"));
+        assert!(question.is_answer_correct("alt1"));
+        assert!(question.is_answer_correct("answer"));
+    }
+
+    #[derive(Debug)]
+    struct SkillMock {
+        generate_questions_calls: RwLock<u32>,
+    }
+
+    impl SkillBase for SkillMock {
+        fn wants_to_print_help(&self) -> bool {
+            false
+        }
+
+        fn get_help_text(&self) -> String {
+            String::new()
+        }
+
+        fn generate_questions(&self, count: u32) -> Vec<Question> {
+            *self
+                .generate_questions_calls
+                .write()
+                .expect("Test: poisoned lock (write)") += 1;
+            vec![
+                Question::builder()
+                    .question("Question")
+                    .answer("Answer")
+                    .build();
+                count as usize
+            ]
+        }
+    }
+
+    impl SkillMock {
+        pub fn new() -> Self {
+            Self {
+                generate_questions_calls: RwLock::new(0),
+            }
+        }
+
+        pub fn generate_questions_calls(&self) -> u32 {
+            *self
+                .generate_questions_calls
+                .read()
+                .expect("Test: poisoned lock (read)")
+        }
+    }
+
+    #[test]
+    fn generator_pregeneration() {
+        let number_of_questions = 5;
+        let skill_mock = SkillMock::new();
+        let generator =
+            QuestionGenerator::new(NumberOfQuestions::Limited(number_of_questions), &skill_mock);
+        for _ in 0..number_of_questions {
+            assert!(generator.has_next_question());
+            let result = generator.next_question();
+            assert!(result.is_ok());
+        }
+        assert_eq!(skill_mock.generate_questions_calls(), 1);
+
+        assert!(!generator.has_next_question());
+        let result = generator.next_question();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn generator_infinite_mode() {
+        let number_of_questions = 10;
+        let skill_mock = SkillMock::new();
+        let generator = QuestionGenerator::new(NumberOfQuestions::Infinite, &skill_mock);
+        for i in 0..number_of_questions {
+            assert!(generator.has_next_question());
+            let result = generator.next_question();
+            assert!(result.is_ok());
+            assert_eq!(skill_mock.generate_questions_calls(), i + 1);
+        }
+        assert!(generator.has_next_question());
+    }
+
+    #[derive(Debug)]
+    struct FaultySkillMock;
+
+    impl SkillBase for FaultySkillMock {
+        fn wants_to_print_help(&self) -> bool {
+            false
+        }
+
+        fn get_help_text(&self) -> String {
+            String::new()
+        }
+
+        fn generate_questions(&self, count: u32) -> Vec<Question> {
+            // Always generates 2 questions
+            vec![
+                Question::builder()
+                    .question("Question")
+                    .answer("Answer")
+                    .build();
+                2
+            ]
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Skill did not generate correct amount of questions")]
+    fn not_enough_questions_generated() {
+        let number_of_questions = 5;
+        let generator =
+            QuestionGenerator::new(NumberOfQuestions::Limited(number_of_questions), &FaultySkillMock);
+        let question = generator.next_question();
     }
 }

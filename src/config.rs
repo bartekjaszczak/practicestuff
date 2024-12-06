@@ -226,3 +226,20 @@ impl GeneralOptions {
         ]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Config:
+    //  - build: args < 2 triggers error msg
+    //  - build: show help / show version returns no skill but options are set
+    //  - build: missing command
+    //  - build: correct build with skill
+    //  - split args tests
+    //  - build err message tests
+    // Behaviour on error:
+    //  - translation string -> enum (from_string)
+    // General options:
+    //  - build: 1 or 2 successful builds with varying options
+}

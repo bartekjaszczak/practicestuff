@@ -129,14 +129,6 @@ impl Stats {
         }
     }
 
-    // Infinite:
-    //   Summary: answered a total of {} questions
-    //   current: correct/answers_so_far
-    //
-    // Limited:
-    //   Summary: total: total, answered: answers_so_far, skipped: remaining questions
-    //   current: correct/answers_so_far
-
     pub fn get_summary(&self) -> String {
         match self.number_of_questions {
             NumberOfQuestions::Infinite => {
@@ -254,4 +246,18 @@ impl Stats {
         }
         number
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    // - build + verify data
+    // - (start + answer) a few times + verify: remaining questions, number of answers,
+    //                                          correct answers, size of time_per_question,
+    //                                          accuracy
+    // - total acc verification (limited + unlimited)
+    // - total time ???
+    // - min/max/avg question time? + last question time
+    // - multiple answers + verify behaviour
+    // - show summary (unlimited/limited)
 }

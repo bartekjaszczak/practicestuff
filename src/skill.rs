@@ -2,7 +2,7 @@ pub mod doomsday_algorithm;
 pub mod powers;
 pub mod times_table;
 
-use std::fmt;
+use std::fmt::Debug;
 
 use powers::Powers;
 use super::question::Question;
@@ -14,8 +14,8 @@ pub trait SkillBase {
     fn generate_questions(&self, count: u32) -> Vec<Question>;
 }
 
-pub trait Skill: SkillBase + fmt::Debug + Sync + Send {}
-impl<T: SkillBase + fmt::Debug + Sync + Send> Skill for T {}
+pub trait Skill: SkillBase + Debug + Sync + Send {}
+impl<T: SkillBase + Debug + Sync + Send> Skill for T {}
 
 pub fn build(command: &str, args: &[String]) -> Result<Box<dyn Skill>, String> {
     match command {
@@ -24,4 +24,11 @@ pub fn build(command: &str, args: &[String]) -> Result<Box<dyn Skill>, String> {
         doomsday_algorithm::CMD => todo!(),
         _ => unreachable!("all commands should be added here"),
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // build each command with no args (args tested in skills' tests)
 }
