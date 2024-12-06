@@ -6,12 +6,13 @@ pub enum ValueKindDefinition {
     OneOfStr(Vec<String>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ArgKindDefinition {
     Flag,
     Value(ValueKindDefinition),
 }
 
+#[derive(Debug, Clone)]
 pub struct ArgDefinition {
     id: String,
     short_name: Option<char>,

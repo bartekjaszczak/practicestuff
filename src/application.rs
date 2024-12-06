@@ -4,7 +4,7 @@ use std::process;
 use std::sync::Arc;
 
 use crate::args::prelude::*;
-use crate::config::{BehaviourOnError, Config, GeneralOptions, NumberOfQuestions};
+use crate::config::{BehaviourOnError, Config, NumberOfQuestions};
 use crate::question::{Question, QuestionGenerator};
 use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
@@ -53,17 +53,6 @@ impl Application {
         )
     }
 
-    fn print_help() {
-        let definitions = &GeneralOptions::get_arg_definitions();
-        let options = help::Options::new("General options", definitions);
-        let help_text = help::build(
-            &Application::usage(),
-            Some(&Application::additional_info()),
-            &options,
-            &COMMANDS,
-        );
-        println!("{help_text}");
-    }
 
     fn print_version() {
         println!("{APP_NAME} {VERSION}");
@@ -78,7 +67,7 @@ struct AppImpl {
 impl AppImpl {
     pub fn run(&self) {
         if self.config.options.show_help {
-            Application::print_help();
+            self.print_help();
             return;
         } else if self.config.options.show_version {
             Application::print_version();
@@ -91,6 +80,18 @@ impl AppImpl {
         }
 
         self.play();
+    }
+
+    fn print_help(&self) {
+        let definitions = &self.config.options.arg_definitions;
+        let options = help::Options::new("General options", definitions);
+        let help_text = help::build(
+            &Application::usage(),
+            Some(&Application::additional_info()),
+            &options,
+            &COMMANDS,
+        );
+        println!("{help_text}");
     }
 
     fn handle_interrupt(&self) {

@@ -1,6 +1,7 @@
 use std::cell::{Cell, RefCell};
 
-use crate::{config::NumberOfQuestions, skill::Skill};
+use crate::config::NumberOfQuestions;
+use crate::skill::Skill;
 
 #[derive(Clone)]
 pub struct Question {
@@ -319,7 +320,7 @@ mod tests {
             String::new()
         }
 
-        fn generate_questions(&self, count: u32) -> Vec<Question> {
+        fn generate_questions(&self, _count: u32) -> Vec<Question> {
             // Always generates 2 questions
             vec![
                 Question::builder()
@@ -339,6 +340,6 @@ mod tests {
             NumberOfQuestions::Limited(number_of_questions),
             &FaultySkillMock,
         );
-        let question = generator.next_question();
+        generator.next_question().unwrap();
     }
 }

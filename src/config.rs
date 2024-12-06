@@ -39,10 +39,10 @@ impl Config {
         let (options, command, command_options) = Config::split_args(&args[1..]);
 
         let options = GeneralOptions::build(options);
-        if let Ok(options) = options {
+        if let Ok(options) = &options {
             if options.show_help || options.show_version {
                 return Ok(Self {
-                    options,
+                    options: options.clone(),
                     skill: None,
                 });
             }
@@ -107,8 +107,9 @@ impl BehaviourOnError {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct GeneralOptions {
+    pub arg_definitions: Vec<ArgDefinition>,
     pub show_help: bool,
     pub show_version: bool,
 
@@ -119,7 +120,7 @@ pub struct GeneralOptions {
 
 impl GeneralOptions {
     fn build(args: &[String]) -> Result<Self, String> {
-        let arg_definitions = Self::get_arg_definitions();
+        let arg_definitions = Self::build_arg_definitions();
         let parsed_args = parser::parse_and_validate_arg_list(args, &arg_definitions)?;
 
         let show_help =
@@ -149,6 +150,7 @@ impl GeneralOptions {
         let behaviour_on_error = BehaviourOnError::from_string(&behaviour_on_error);
 
         Ok(Self {
+            arg_definitions,
             show_help,
             show_version,
             number_of_questions,
@@ -157,7 +159,7 @@ impl GeneralOptions {
         })
     }
 
-    pub fn get_arg_definitions() -> Vec<ArgDefinition> {
+    fn build_arg_definitions() -> Vec<ArgDefinition> {
         vec![
             ArgDefinition::builder()
                 .id(ARG_ID_HELP)

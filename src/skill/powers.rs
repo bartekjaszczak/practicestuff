@@ -16,6 +16,7 @@ const ARG_ID_UPPER_BOUNDARY: &str = "upper_boundary";
 
 #[derive(Debug)]
 pub struct Powers {
+    arg_definitions: Vec<ArgDefinition>,
     show_help: bool,
 
     base: u32,
@@ -25,7 +26,7 @@ pub struct Powers {
 
 impl Powers {
     pub fn build(args: &[String]) -> Result<Self, String> {
-        let arg_definitions = Self::get_arg_definitions();
+        let arg_definitions = Self::build_arg_definitions();
         let parsed_args = parser::parse_and_validate_arg_list(args, &arg_definitions)
             .map_err(|err| Self::build_err_message(Some(err)))?;
 
@@ -59,6 +60,7 @@ impl Powers {
         }
 
         Ok(Self {
+            arg_definitions,
             show_help,
             base,
             lower_boundary,
@@ -74,20 +76,20 @@ impl Powers {
         format!("Try '{APP_NAME} powers --help' for more information.")
     }
 
-    fn additional_info() -> String {
-        let default_base = Self::get_arg_definitions()
+    fn additional_info(&self) -> String {
+        let default_base = self.arg_definitions
             .iter()
             .find(|def| def.id() == ARG_ID_BASE)
             .expect("base argument definition not found")
             .default_value()
             .to_string();
-        let default_lower_boundary = Self::get_arg_definitions()
+        let default_lower_boundary = self.arg_definitions
             .iter()
             .find(|def| def.id() == ARG_ID_LOWER_BOUNDARY)
             .expect("lower boundary argument definition not found")
             .default_value()
             .to_string();
-        let default_upper_boundary = Self::get_arg_definitions()
+        let default_upper_boundary = self.arg_definitions
             .iter()
             .find(|def| def.id() == ARG_ID_UPPER_BOUNDARY)
             .expect("upper boundary argument definition not found")
@@ -97,7 +99,7 @@ impl Powers {
         format!("Practice powers with a customizable base and exponent range. By default, the base is {default_base}, with exponents ranging from {default_lower_boundary} to {default_upper_boundary}.")
     }
 
-    fn get_arg_definitions() -> Vec<ArgDefinition> {
+    fn build_arg_definitions() -> Vec<ArgDefinition> {
         vec![
             ArgDefinition::builder()
                 .id(ARG_ID_HELP)
@@ -197,11 +199,11 @@ impl SkillBase for Powers {
     }
 
     fn get_help_text(&self) -> String {
-        let definitions = &Self::get_arg_definitions();
+        let definitions = &self.arg_definitions;
         let options = help::Options::new("Powers options", definitions);
         help::build(
             &Self::usage(),
-            Some(&Self::additional_info()),
+            Some(&self.additional_info()),
             &options,
             &[],
         )
