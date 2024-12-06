@@ -30,5 +30,18 @@ pub fn build(command: &str, args: &[String]) -> Result<Box<dyn Skill>, String> {
 mod tests {
     use super::*;
 
-    // build each command with no args (args tested in skills' tests)
+    #[test]
+    #[should_panic(expected = "all commands should be added")]
+    fn build_incorrect_command() {
+        let command = "unknown";
+        let args = [];
+        build(command, &args).unwrap();
+    }
+
+    #[test]
+    fn build_powers() {
+        let command = powers::CMD;
+        let args = [];
+        build(command, &args).unwrap();
+    }
 }
