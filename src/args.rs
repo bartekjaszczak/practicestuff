@@ -23,11 +23,23 @@ pub mod prelude {
     pub use super::ArgValue;
 }
 
+use std::fmt::Display;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum ArgValue {
     UnsignedInt(u32),
     Str(String),
     Bool(bool),
+}
+
+impl Display for ArgValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::UnsignedInt(value) => write!(f, "{value}"),
+            Self::Str(value) => write!(f, "{value}"),
+            Self::Bool(value) => write!(f, "{value}"),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -42,5 +54,22 @@ impl ArgValuePair {
             id: id.to_string(),
             value,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn arg_value_to_string() {
+        let value = ArgValue::UnsignedInt(42);
+        assert_eq!(value.to_string(), "42");
+
+        let value = ArgValue::Str("value".to_string());
+        assert_eq!(value.to_string(), "value");
+
+        let value = ArgValue::Bool(true);
+        assert_eq!(value.to_string(), "true");
     }
 }

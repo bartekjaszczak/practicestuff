@@ -67,11 +67,34 @@ impl Powers {
     }
 
     fn usage() -> String {
-        format!("Usage: {APP_NAME} [option]... powers [powers_option]")
+        format!("Usage: {APP_NAME} [option]... powers [powers_option]...")
     }
 
     fn help_prompt() -> String {
         format!("Try '{APP_NAME} powers --help' for more information.")
+    }
+
+    fn additional_info() -> String {
+        let default_base = Self::get_arg_definitions()
+            .iter()
+            .find(|def| def.id() == ARG_ID_BASE)
+            .expect("base argument definition not found")
+            .default_value()
+            .to_string();
+        let default_lower_boundary = Self::get_arg_definitions()
+            .iter()
+            .find(|def| def.id() == ARG_ID_LOWER_BOUNDARY)
+            .expect("lower boundary argument definition not found")
+            .default_value()
+            .to_string();
+        let default_upper_boundary = Self::get_arg_definitions()
+            .iter()
+            .find(|def| def.id() == ARG_ID_UPPER_BOUNDARY)
+            .expect("upper boundary argument definition not found")
+            .default_value()
+            .to_string();
+
+        format!("Practice powers with a customizable base and exponent range. By default, the base is {default_base}, with exponents ranging from {default_lower_boundary} to {default_upper_boundary}.")
     }
 
     fn get_arg_definitions() -> Vec<ArgDefinition> {
@@ -176,7 +199,12 @@ impl SkillBase for Powers {
     fn get_help_text(&self) -> String {
         let definitions = &Self::get_arg_definitions();
         let options = help::Options::new("Powers options", definitions);
-        help::build(&Self::usage(), None, &options, &[])
+        help::build(
+            &Self::usage(),
+            Some(&Self::additional_info()),
+            &options,
+            &[],
+        )
     }
 }
 

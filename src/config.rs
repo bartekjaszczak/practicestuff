@@ -194,7 +194,7 @@ impl GeneralOptions {
                 .short_name('d')
                 .long_name("disable-live-statistics")
                 .description(vec![
-                    "Disable live statistics; statistics will now display between questions."
+                    "Disable live statistics; statistics will not display between questions."
                         .to_string(),
                 ])
                 .kind(ArgKindDefinition::Flag)

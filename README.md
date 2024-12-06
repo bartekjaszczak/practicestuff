@@ -51,6 +51,7 @@ Initial list of skills:
 - address all clippy's warnings
 - organise includes (std, external, internal, relative)
 - integration tests
+- arg definitions to be evaluated during compilation
 
 ## Powers
 
