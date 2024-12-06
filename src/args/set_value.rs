@@ -1,11 +1,11 @@
 use super::{ArgValue, ArgValuePair};
-use super::definition::ArgDefinition;
+use super::definition::Arg;
 
 pub trait SetFromArg {
     fn set_value_from_arg_or_default(
         arg_id: &str,
         arg_list: &[ArgValuePair],
-        arg_definitions: &[ArgDefinition],
+        arg_definitions: &[Arg],
     ) -> Self;
 }
 
@@ -17,7 +17,7 @@ impl SetFromArg for u32 {
     fn set_value_from_arg_or_default(
         arg_id: &str,
         arg_list: &[ArgValuePair],
-        arg_definitions: &[ArgDefinition],
+        arg_definitions: &[Arg],
     ) -> Self {
         if let Some(arg) = find_arg(arg_id, arg_list) {
             if let ArgValue::UnsignedInt(val) = arg.value {
@@ -41,7 +41,7 @@ impl SetFromArg for bool {
     fn set_value_from_arg_or_default(
         arg_id: &str,
         arg_list: &[ArgValuePair],
-        arg_definitions: &[ArgDefinition],
+        arg_definitions: &[Arg],
     ) -> Self {
         if let Some(arg) = find_arg(arg_id, arg_list) {
             if let ArgValue::Bool(val) = arg.value {
@@ -65,7 +65,7 @@ impl SetFromArg for String {
     fn set_value_from_arg_or_default(
         arg_id: &str,
         arg_list: &[ArgValuePair],
-        arg_definitions: &[ArgDefinition],
+        arg_definitions: &[Arg],
     ) -> Self {
         if let Some(arg) = find_arg(arg_id, arg_list) {
             if let ArgValue::Str(val) = &arg.value {
@@ -89,7 +89,7 @@ impl SetFromArg for String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::args::definition::{ArgKindDefinition, ValueKindDefinition};
+    use crate::args::definition::{ArgKind, ValueKind};
 
     #[test]
     fn find_arg_test() {
@@ -116,10 +116,10 @@ mod tests {
         let expected = true;
         let arg_id = "some_arg";
         let arg_list = [ArgValuePair::new("some_arg", ArgValue::Bool(expected))];
-        let arg_definitions = [ArgDefinition::builder()
+        let arg_definitions = [Arg::builder()
             .id(arg_id)
             .short_name('s')
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build()];
         let val = bool::set_value_from_arg_or_default(arg_id, &arg_list, &arg_definitions);
@@ -135,10 +135,10 @@ mod tests {
             "some_arg",
             ArgValue::UnsignedInt(expected),
         )];
-        let arg_definitions = [ArgDefinition::builder()
+        let arg_definitions = [Arg::builder()
             .id(arg_id)
             .short_name('s')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+            .kind(ArgKind::Value(ValueKind::UnsignedInt))
             .default_value(ArgValue::UnsignedInt(0))
             .build()];
         let val = u32::set_value_from_arg_or_default(arg_id, &arg_list, &arg_definitions);
@@ -155,10 +155,10 @@ mod tests {
             ArgValue::Str(expected.clone()),
         )];
 
-        let arg_definitions = [ArgDefinition::builder()
+        let arg_definitions = [Arg::builder()
             .id(arg_id)
             .short_name('s')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(
+            .kind(ArgKind::Value(ValueKind::OneOfStr(
                 vec![],
             )))
             .default_value(ArgValue::Str(String::new()))
@@ -183,10 +183,10 @@ mod tests {
         let arg_id = "arg";
         let arg_default_value = 42;
         let arg_list = [];
-        let arg_definitions = [ArgDefinition::builder()
+        let arg_definitions = [Arg::builder()
             .id(arg_id)
             .short_name('a')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+            .kind(ArgKind::Value(ValueKind::UnsignedInt))
             .default_value(ArgValue::UnsignedInt(arg_default_value))
             .build()];
 

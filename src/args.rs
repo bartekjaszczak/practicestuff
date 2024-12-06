@@ -16,7 +16,7 @@ pub mod parser;
 mod set_value;
 
 pub mod prelude {
-    pub use super::definition::{ArgDefinition, ArgKindDefinition, ValueKindDefinition};
+    pub use super::definition::{Arg, ArgKind, ValueKind};
     pub use super::help;
     pub use super::parser;
     pub use super::set_value::SetFromArg;

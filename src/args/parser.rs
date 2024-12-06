@@ -1,11 +1,11 @@
-use super::definition::{ArgDefinition, ArgKindDefinition, ValueKindDefinition};
+use super::definition::{Arg, ArgKind, ValueKind};
 use super::{ArgValue, ArgValuePair, definition};
 
 type IsLongName = bool;
 
 pub fn parse_and_validate_arg_list(
     arg_list: &[String],
-    arg_definition_list: &[ArgDefinition],
+    arg_definition_list: &[Arg],
 ) -> Result<Vec<ArgValuePair>, String> {
     let mut current_index = 0;
     let mut parsed_args: Vec<ArgValuePair> = Vec::new();
@@ -32,7 +32,7 @@ pub fn parse_and_validate_arg_list(
 
 fn parse_and_validate_arg(
     arg_list: &[String],
-    arg_definition_list: &[ArgDefinition],
+    arg_definition_list: &[Arg],
 ) -> Result<(ArgValuePair, usize), String> {
     let mut consumed_args = 0;
     let next_arg = arg_list
@@ -41,8 +41,8 @@ fn parse_and_validate_arg(
     consumed_args += 1;
     let (is_long_name, arg_name, mut arg_value) = decompose_and_validate_arg_structure(next_arg)?;
     let arg_definition =
-        definition::match_arg_to_definition(next_arg, arg_name, is_long_name, arg_definition_list)?;
-    if let ArgKindDefinition::Value(_) = arg_definition.kind() {
+        definition::match_arg(next_arg, arg_name, is_long_name, arg_definition_list)?;
+    if let ArgKind::Value(_) = arg_definition.kind() {
         if (is_long_name && arg_value.is_none())
             || (!is_long_name && arg_list.len() < consumed_args + 1)
         {
@@ -99,22 +99,22 @@ fn decompose_and_validate_arg_structure(
 fn validate_and_create_arg(
     arg: &str,
     arg_value: Option<&str>,
-    arg_definition: &ArgDefinition,
+    arg_definition: &Arg,
 ) -> Result<ArgValuePair, String> {
     let value = match &arg_definition.kind() {
-        ArgKindDefinition::Flag => {
+        ArgKind::Flag => {
             if arg_value.is_some() {
                 return Err(format!("option '{arg}' doesn't allow an argument"));
             }
             ArgValue::Bool(true)
         }
-        ArgKindDefinition::Value(value_kind) => {
+        ArgKind::Value(value_kind) => {
             let Some(arg_value) = arg_value else {
                 return Err(format!("option '{arg}' requires an argument"));
             };
             match &value_kind {
-                ValueKindDefinition::UnsignedInt => ArgValue::UnsignedInt(parse_u32(arg_value)?),
-                ValueKindDefinition::OneOfStr(possible_values) => {
+                ValueKind::UnsignedInt => ArgValue::UnsignedInt(parse_u32(arg_value)?),
+                ValueKind::OneOfStr(possible_values) => {
                     ArgValue::Str(validate_one_of_str(arg_value, possible_values)?.to_string())
                 }
             }
@@ -198,10 +198,10 @@ mod tests {
     fn found_value_in_flag() {
         let arg = "--some-flag";
         let arg_value = Some("someval");
-        let arg_definition = ArgDefinition::builder()
+        let arg_definition = Arg::builder()
             .id(arg)
             .short_name('s')
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build();
 
@@ -213,10 +213,10 @@ mod tests {
     fn found_no_value_when_expected() {
         let arg = "--some-arg";
         let arg_value = None;
-        let arg_definition = ArgDefinition::builder()
+        let arg_definition = Arg::builder()
             .id(arg)
             .short_name('s')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+            .kind(ArgKind::Value(ValueKind::UnsignedInt))
             .default_value(ArgValue::UnsignedInt(42))
             .build();
 
@@ -227,10 +227,10 @@ mod tests {
     fn validate_and_create_bool_arg() {
         let arg = "--some_flag";
         let arg_value = None;
-        let arg_definition = ArgDefinition::builder()
+        let arg_definition = Arg::builder()
             .id(arg)
             .short_name('s')
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build();
 
@@ -245,10 +245,10 @@ mod tests {
         let arg = "--some_arg";
         let value = 42;
         let arg_value = Some(42.to_string());
-        let arg_definition = ArgDefinition::builder()
+        let arg_definition = Arg::builder()
             .id(arg)
             .short_name('s')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+            .kind(ArgKind::Value(ValueKind::UnsignedInt))
             .default_value(ArgValue::UnsignedInt(0))
             .build();
 
@@ -263,10 +263,10 @@ mod tests {
         let arg = "--some_arg";
         let value = "val";
         let arg_value = Some(value);
-        let arg_definition = ArgDefinition::builder()
+        let arg_definition = Arg::builder()
             .id(arg)
             .short_name('s')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(
+            .kind(ArgKind::Value(ValueKind::OneOfStr(
                 vec!["val".to_string(), "another_val".to_string()],
             )))
             .default_value(ArgValue::Str("default".to_string()))
@@ -336,10 +336,10 @@ mod tests {
     #[should_panic(expected = "requires an argument")]
     fn validate_long_arg_with_no_value() {
         let arg_list = ["--long".to_string()];
-        let arg_definition_list = [ArgDefinition::builder()
+        let arg_definition_list = [Arg::builder()
             .id("long")
             .long_name("long")
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+            .kind(ArgKind::Value(ValueKind::UnsignedInt))
             .default_value(ArgValue::UnsignedInt(42))
             .build()];
 
@@ -350,10 +350,10 @@ mod tests {
     fn validate_short_arg_correctly() {
         let arg_value = 65;
         let arg_list = ["-s".to_string(), arg_value.to_string()];
-        let arg_definition_list = [ArgDefinition::builder()
+        let arg_definition_list = [Arg::builder()
             .id("short")
             .short_name('s')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+            .kind(ArgKind::Value(ValueKind::UnsignedInt))
             .default_value(ArgValue::UnsignedInt(42))
             .build()];
 
@@ -367,10 +367,10 @@ mod tests {
     #[test]
     fn validate_long_arg_with_value_correctly() {
         let arg_list = ["--long=65".to_string()];
-        let arg_definition_list = [ArgDefinition::builder()
+        let arg_definition_list = [Arg::builder()
             .id("long")
             .long_name("long")
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+            .kind(ArgKind::Value(ValueKind::UnsignedInt))
             .default_value(ArgValue::UnsignedInt(42))
             .build()];
 
@@ -384,10 +384,10 @@ mod tests {
     #[test]
     fn validate_long_arg_without_value_correctly() {
         let arg_list = ["--long".to_string()];
-        let arg_definition_list = [ArgDefinition::builder()
+        let arg_definition_list = [Arg::builder()
             .id("long")
             .long_name("long")
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build()];
 
@@ -402,10 +402,10 @@ mod tests {
     #[should_panic(expected = "requires an argument")]
     fn validate_short_arg_with_missing_value() {
         let arg_list = ["-s".to_string()];
-        let arg_definition_list = [ArgDefinition::builder()
+        let arg_definition_list = [Arg::builder()
             .id("short")
             .short_name('s')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+            .kind(ArgKind::Value(ValueKind::UnsignedInt))
             .default_value(ArgValue::UnsignedInt(42))
             .build()];
 
@@ -422,25 +422,25 @@ mod tests {
             "-f".to_string(),
         ];
         let arg_definition_list = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("long_u32")
                 .short_name('u')
                 .long_name("long-u32")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .default_value(ArgValue::UnsignedInt(666))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("long_flag")
                 .short_name('l')
                 .long_name("long-flag")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("short_with_value")
                 .short_name('s')
                 .long_name("short-with-value")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(
+                .kind(ArgKind::Value(ValueKind::OneOfStr(
                     vec![
                         "valid_string".to_string(),
                         "another_valid_string".to_string(),
@@ -448,11 +448,11 @@ mod tests {
                 )))
                 .default_value(ArgValue::Str("default".to_string()))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("short_flag")
                 .short_name('f')
                 .long_name("short-flag")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
         ];
@@ -483,27 +483,27 @@ mod tests {
             "--another_invalid=".to_string(),
         ];
         let arg_definition_list = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("long_u32")
                 .short_name('u')
                 .long_name("long-u32")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
                 .default_value(ArgValue::UnsignedInt(666))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("long_flag")
                 .short_name('l')
                 .long_name("long-flag")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(true)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("short_with_value")
                 .short_name('s')
                 .long_name("short-with-value")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(
+                .kind(ArgKind::Value(ValueKind::OneOfStr(
                     vec![
                         "valid_string".to_string(),
                         "another_valid_string".to_string(),
@@ -512,11 +512,11 @@ mod tests {
                 .stop_parsing(false)
                 .default_value(ArgValue::Str("default".to_string()))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("short_flag")
                 .short_name('f')
                 .long_name("short-flag")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(false)
                 .default_value(ArgValue::Bool(false))
                 .build(),
@@ -543,27 +543,27 @@ mod tests {
             "42".to_string(), // ...but with the same value
         ];
         let arg_definition_list = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("long_u32")
                 .short_name('u')
                 .long_name("long-u32")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
                 .default_value(ArgValue::UnsignedInt(666))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("long_flag")
                 .short_name('l')
                 .long_name("long-flag")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(false)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("short_with_value")
                 .short_name('s')
                 .long_name("short-with-value")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(
+                .kind(ArgKind::Value(ValueKind::OneOfStr(
                     vec![
                         "valid_string".to_string(),
                         "another_valid_string".to_string(),
@@ -572,11 +572,11 @@ mod tests {
                 .stop_parsing(false)
                 .default_value(ArgValue::Str("default".to_string()))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("short_flag")
                 .short_name('f')
                 .long_name("short-flag")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(false)
                 .default_value(ArgValue::Bool(false))
                 .build(),
@@ -609,27 +609,27 @@ mod tests {
             "43".to_string(), // with different value (42 vs 43)
         ];
         let arg_definition_list = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("long_u32")
                 .short_name('u')
                 .long_name("long-u32")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
                 .default_value(ArgValue::UnsignedInt(666))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("long_flag")
                 .short_name('l')
                 .long_name("long-flag")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(false)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("short_with_value")
                 .short_name('s')
                 .long_name("short-with-value")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(
+                .kind(ArgKind::Value(ValueKind::OneOfStr(
                     vec![
                         "valid_string".to_string(),
                         "another_valid_string".to_string(),
@@ -638,11 +638,11 @@ mod tests {
                 .stop_parsing(false)
                 .default_value(ArgValue::Str("default".to_string()))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("short_flag")
                 .short_name('f')
                 .long_name("short-flag")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(false)
                 .default_value(ArgValue::Bool(false))
                 .build(),

@@ -1,29 +1,29 @@
 use super::ArgValue;
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum ValueKindDefinition {
+pub enum ValueKind {
     UnsignedInt,
     OneOfStr(Vec<String>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum ArgKindDefinition {
+pub enum ArgKind {
     Flag,
-    Value(ValueKindDefinition),
+    Value(ValueKind),
 }
 
 #[derive(Debug, Clone)]
-pub struct ArgDefinition {
+pub struct Arg {
     id: String,
     short_name: Option<char>,
     long_name: Option<String>,
     description: Vec<String>,
-    kind: ArgKindDefinition,
+    kind: ArgKind,
     stop_parsing: bool,
     default_value: ArgValue,
 }
 
-impl ArgDefinition {
+impl Arg {
     pub fn builder() -> ArgDefinitionBuilder {
         ArgDefinitionBuilder::default()
     }
@@ -44,7 +44,7 @@ impl ArgDefinition {
         &self.description
     }
 
-    pub fn kind(&self) -> &ArgKindDefinition {
+    pub fn kind(&self) -> &ArgKind {
         &self.kind
     }
 
@@ -63,7 +63,7 @@ pub struct ArgDefinitionBuilder {
     short_name: Option<char>,
     long_name: Option<String>,
     description: Vec<String>,
-    kind: Option<ArgKindDefinition>,
+    kind: Option<ArgKind>,
     stop_parsing: bool,
     default_value: Option<ArgValue>,
 }
@@ -89,7 +89,7 @@ impl ArgDefinitionBuilder {
         self
     }
 
-    pub fn kind(mut self, kind: ArgKindDefinition) -> Self {
+    pub fn kind(mut self, kind: ArgKind) -> Self {
         self.kind = Some(kind);
         self
     }
@@ -104,14 +104,14 @@ impl ArgDefinitionBuilder {
         self
     }
 
-    pub fn build(self) -> ArgDefinition {
+    pub fn build(self) -> Arg {
         assert!(!self.id.is_empty(), "id is required");
         assert!(
             !(self.short_name.is_none() && self.long_name.is_none()),
             "either short or long name is required"
         );
         self.validate_arg_type();
-        ArgDefinition {
+        Arg {
             id: self.id,
             short_name: self.short_name,
             long_name: self.long_name,
@@ -124,22 +124,22 @@ impl ArgDefinitionBuilder {
 
     fn validate_arg_type(&self) {
         match &self.kind {
-            Some(ArgKindDefinition::Flag) => {
+            Some(ArgKind::Flag) => {
                 assert!(
                     self.default_value.is_none()
                         || matches!(self.default_value, Some(ArgValue::Bool(_))),
                     "default value must be of type bool"
                 );
             }
-            Some(ArgKindDefinition::Value(kind)) => match kind {
-                ValueKindDefinition::UnsignedInt => {
+            Some(ArgKind::Value(kind)) => match kind {
+                ValueKind::UnsignedInt => {
                     assert!(
                         self.default_value.is_none()
                             || matches!(self.default_value, Some(ArgValue::UnsignedInt(_))),
                         "default value must be of type u32"
                     );
                 }
-                ValueKindDefinition::OneOfStr(_) => {
+                ValueKind::OneOfStr(_) => {
                     assert!(
                         self.default_value.is_none()
                             || matches!(self.default_value, Some(ArgValue::Str(_))),
@@ -152,12 +152,12 @@ impl ArgDefinitionBuilder {
     }
 }
 
-pub fn match_arg_to_definition<'a>(
+pub fn match_arg<'a>(
     arg: &str,
     arg_name: &str,
     is_long_name: bool,
-    arg_definition_list: &'a [ArgDefinition],
-) -> Result<&'a ArgDefinition, String> {
+    arg_definition_list: &'a [Arg],
+) -> Result<&'a Arg, String> {
     if let Some(arg_definition) = arg_definition_list.iter().find(|elem| {
         if is_long_name {
             if let Some(long_name) = &elem.long_name() {
@@ -183,12 +183,12 @@ mod tests {
 
     #[test]
     fn build_arg_definition() {
-        let arg_definition = ArgDefinition::builder()
+        let arg_definition = Arg::builder()
             .id("some_arg")
             .short_name('s')
             .long_name("some-arg")
             .description(vec!["some description".to_string()])
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .stop_parsing(true)
             .default_value(ArgValue::Bool(false))
             .build();
@@ -200,7 +200,7 @@ mod tests {
             arg_definition.description,
             vec!["some description".to_string()]
         );
-        assert_eq!(arg_definition.kind, ArgKindDefinition::Flag);
+        assert_eq!(arg_definition.kind, ArgKind::Flag);
         assert!(arg_definition.stop_parsing);
         assert_eq!(arg_definition.default_value, ArgValue::Bool(false));
     }
@@ -208,10 +208,10 @@ mod tests {
     #[test]
     #[should_panic(expected = "id is required")]
     fn arg_definition_requires_id() {
-        ArgDefinition::builder()
+        Arg::builder()
             .short_name('s')
             .long_name("some-arg")
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build();
     }
@@ -219,23 +219,23 @@ mod tests {
     #[test]
     #[should_panic(expected = "either short or long name is required")]
     fn arg_definition_requires_short_or_long_name() {
-        ArgDefinition::builder()
+        Arg::builder()
             .id("some_arg")
             .short_name('s')
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build(); // passes
 
-        ArgDefinition::builder()
+        Arg::builder()
             .id("some_arg")
             .long_name("long")
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build(); // passes
 
-        ArgDefinition::builder()
+        Arg::builder()
             .id("some_arg")
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build();
     }
@@ -243,7 +243,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "kind is required")]
     fn arg_definition_requires_kind() {
-        ArgDefinition::builder()
+        Arg::builder()
             .id("some_arg")
             .short_name('s')
             .default_value(ArgValue::Bool(false))
@@ -253,20 +253,20 @@ mod tests {
     #[test]
     #[should_panic(expected = "default value is required")]
     fn arg_definition_requires_default_value() {
-        ArgDefinition::builder()
+        Arg::builder()
             .id("some_arg")
             .short_name('s')
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .build();
     }
 
     #[test]
     #[should_panic(expected = "default value must be of type bool")]
     fn flag_arg_definition_requires_bool_default_value() {
-        ArgDefinition::builder()
+        Arg::builder()
             .id("some_arg")
             .short_name('s')
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::UnsignedInt(42))
             .build();
     }
@@ -274,10 +274,10 @@ mod tests {
     #[test]
     #[should_panic(expected = "default value must be of type u32")]
     fn u32_arg_definition_requires_u32_default_value() {
-        ArgDefinition::builder()
+        Arg::builder()
             .id("some_arg")
             .short_name('s')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+            .kind(ArgKind::Value(ValueKind::UnsignedInt))
             .default_value(ArgValue::Bool(false))
             .build();
     }
@@ -285,10 +285,10 @@ mod tests {
     #[test]
     #[should_panic(expected = "default value must be of type String")]
     fn string_arg_definition_requires_string_default_value() {
-        ArgDefinition::builder()
+        Arg::builder()
             .id("some_arg")
             .short_name('s')
-            .kind(ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(
+            .kind(ArgKind::Value(ValueKind::OneOfStr(
                 vec![],
             )))
             .default_value(ArgValue::Bool(false))
@@ -300,23 +300,23 @@ mod tests {
         let arg = "my_arg";
         let arg_name = "my_arg_name";
         let arg_definition_list = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("another_arg")
                 .short_name('s')
                 .long_name("different_name")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("different_arg")
                 .short_name('a')
                 .long_name("another_name")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .default_value(ArgValue::UnsignedInt(42))
                 .build(),
         ];
 
-        let result = match_arg_to_definition(arg, arg_name, false, &arg_definition_list);
+        let result = match_arg(arg, arg_name, false, &arg_definition_list);
         assert!(result.is_err());
     }
 
@@ -325,23 +325,23 @@ mod tests {
         let arg = "my_arg";
         let arg_name = "a";
         let arg_definition_list = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("another_arg")
                 .short_name('s')
                 .long_name("different_name")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("different_arg")
                 .short_name('a')
                 .long_name("another_name")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .default_value(ArgValue::UnsignedInt(42))
                 .build(),
         ];
 
-        let result = match_arg_to_definition(arg, arg_name, false, &arg_definition_list);
+        let result = match_arg(arg, arg_name, false, &arg_definition_list);
         assert!(result.is_ok());
     }
 
@@ -350,23 +350,23 @@ mod tests {
         let arg = "my_arg";
         let arg_name = "long_name";
         let arg_definition_list = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("another_arg")
                 .short_name('s')
                 .long_name("long_name")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("different_arg")
                 .short_name('a')
                 .long_name("another_name")
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .default_value(ArgValue::UnsignedInt(42))
                 .build(),
         ];
 
-        let result = match_arg_to_definition(arg, arg_name, true, &arg_definition_list);
+        let result = match_arg(arg, arg_name, true, &arg_definition_list);
         assert!(result.is_ok());
     }
 }

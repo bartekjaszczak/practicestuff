@@ -1,6 +1,6 @@
 use std::cmp;
 
-use super::definition::ArgDefinition;
+use super::definition::Arg;
 
 const INDENT_WIDTH: usize = 2; // indent of 2 spaces before the option/command
 const LONG_NAME_PREFIX: usize = 2; // the "--" before the long name
@@ -20,11 +20,11 @@ impl<'a> Command<'a> {
 
 pub struct Options<'a> {
     title: &'a str,
-    definitions: &'a [ArgDefinition],
+    definitions: &'a [Arg],
 }
 
 impl<'a> Options<'a> {
-    pub fn new(title: &'a str, options: &'a [ArgDefinition]) -> Self {
+    pub fn new(title: &'a str, options: &'a [Arg]) -> Self {
         Self {
             title,
             definitions: options,
@@ -72,7 +72,7 @@ pub fn build(
     help
 }
 
-fn build_options(options: &[ArgDefinition], column_width: usize) -> String {
+fn build_options(options: &[Arg], column_width: usize) -> String {
     let mut result = String::new();
     let long_name_width = column_width - INDENT_WIDTH - SHORT_NAME_WIDTH - GAP_WIDTH;
 
@@ -133,7 +133,7 @@ fn build_commands(commands: &[Command], column_width: usize) -> String {
     result
 }
 
-fn calculate_first_column_width(options: &[ArgDefinition], commands: &[Command]) -> usize {
+fn calculate_first_column_width(options: &[Arg], commands: &[Command]) -> usize {
     let max_option_width = options
         .iter()
         .map(|option| match option.long_name() {
@@ -164,10 +164,10 @@ mod tests {
 
     #[test]
     fn option_with_short_name_only() {
-        let options = [ArgDefinition::builder()
+        let options = [Arg::builder()
             .id("arg1")
             .short_name('s')
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build()];
 
@@ -180,10 +180,10 @@ mod tests {
     #[test]
     fn option_with_long_name_only() {
         let name = "long-name";
-        let options = [ArgDefinition::builder()
+        let options = [Arg::builder()
             .id("arg1")
             .long_name(name)
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build()];
 
@@ -196,11 +196,11 @@ mod tests {
     #[test]
     fn option_with_short_and_long_names() {
         let name = "long-name";
-        let options = [ArgDefinition::builder()
+        let options = [Arg::builder()
             .id("arg1")
             .short_name('s')
             .long_name(name)
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build()];
 
@@ -213,16 +213,16 @@ mod tests {
     #[test]
     fn multiple_options_with_short_names_only() {
         let options = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("arg1")
                 .short_name('s')
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("arg2")
                 .short_name('x')
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
         ];
@@ -239,25 +239,25 @@ mod tests {
         let name2 = "even-longer-name";
         let name3 = "the-loooooooongest-name";
         let options = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("arg1")
                 .short_name('s')
                 .long_name(name1)
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("arg2")
                 .short_name('s')
                 .long_name(name2)
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("arg3")
                 .short_name('s')
                 .long_name(name3)
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .build(),
         ];
@@ -290,10 +290,10 @@ mod tests {
         let command_name = "the-looooongest-command-you-can-imagine";
         let commands = [Command::new(command_name, "desc")];
         let long_name = "opt-long-name";
-        let options = [ArgDefinition::builder()
+        let options = [Arg::builder()
             .id("arg")
             .long_name(long_name)
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build()];
 
@@ -308,10 +308,10 @@ mod tests {
         let command_name = "cmd";
         let commands = [Command::new(command_name, "desc")];
         let long_name = "very-long-command-name";
-        let options = [ArgDefinition::builder()
+        let options = [Arg::builder()
             .id("arg")
             .long_name(long_name)
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build()];
 
@@ -323,10 +323,10 @@ mod tests {
 
     #[test]
     fn only_options() {
-        let definitions = [ArgDefinition::builder()
+        let definitions = [Arg::builder()
             .id("arg")
             .long_name("some-name")
-            .kind(ArgKindDefinition::Flag)
+            .kind(ArgKind::Flag)
             .default_value(ArgValue::Bool(false))
             .build()];
         let options = Options::new("Options", &definitions);
@@ -374,35 +374,35 @@ mod tests {
     #[test]
     fn full_help() {
         let definitions = [
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("arg1")
                 .short_name('a')
                 .long_name("first-name")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .description(vec!["one-line description".to_string()])
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("arg2")
                 .short_name('b')
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 // no description
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("arg3")
                 .long_name("third-name")
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .description(vec![
                     "first description line".to_string(),
                     "second line".to_string(),
                 ])
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id("arg4")
                 .short_name('d')
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .default_value(ArgValue::Bool(false))
                 .description(vec!["another short description".to_string()])
                 .build(),

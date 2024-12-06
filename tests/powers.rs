@@ -8,7 +8,7 @@ use common::CMD;
 #[test]
 fn powers_unrecognised_arg() {
     let mut cmd = Command::cargo_bin(CMD).expect("crate not found");
-    cmd.args(&["powers", "--incorrect"])
+    cmd.args(["powers", "--incorrect"])
         .assert()
         .failure()
         .stderr(
@@ -19,7 +19,7 @@ fn powers_unrecognised_arg() {
 #[test]
 fn powers_missing_arg_value_short() {
     let mut cmd = Command::cargo_bin(CMD).expect("crate not found");
-    cmd.args(&["powers", "-b"]).assert().failure().stderr(
+    cmd.args(["powers", "-b"]).assert().failure().stderr(
         predicate::str::contains("Usage:").and(predicate::str::contains("requires an argument")),
     );
 }
@@ -27,7 +27,7 @@ fn powers_missing_arg_value_short() {
 #[test]
 fn powers_missing_arg_value_long() {
     let mut cmd = Command::cargo_bin(CMD).expect("crate not found");
-    cmd.args(&["powers", "--base"]).assert().failure().stderr(
+    cmd.args(["powers", "--base"]).assert().failure().stderr(
         predicate::str::contains("Usage:").and(predicate::str::contains("requires an argument")),
     );
 }
@@ -45,7 +45,7 @@ fn powers_show_help() {
 #[test]
 fn powers_one_question_correct_answer() {
     let mut cmd = Command::cargo_bin(CMD).expect("crate not found");
-    cmd.args(&[
+    cmd.args([
         "--number-of-questions=1",
         "powers",
         "-b",
@@ -64,7 +64,7 @@ fn powers_one_question_correct_answer() {
 #[test]
 fn powers_one_question_incorrect_answer() {
     let mut cmd = Command::cargo_bin(CMD).expect("crate not found");
-    cmd.args(&["--number-of-questions=1", "powers"])
+    cmd.args(["--number-of-questions=1", "powers"])
         .write_stdin("hehe") // "hehe" is probably not a power of 2
         .assert()
         .success()

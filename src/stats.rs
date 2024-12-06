@@ -5,11 +5,11 @@ use crate::config::NumberOfQuestions;
 
 const DURATION_ZERO: Duration = Duration::new(0, 0);
 
-pub struct StatsLock {
+pub struct Lock {
     stats: RwLock<Stats>,
 }
 
-impl StatsLock {
+impl Lock {
     pub fn new() -> Self {
         Self {
             stats: RwLock::new(Stats {
@@ -257,7 +257,7 @@ mod tests {
 
     #[test]
     fn build_and_verify_stats_limited_questions() {
-        let stats = StatsLock::new();
+        let stats = Lock::new();
         stats.start(NumberOfQuestions::Limited(10));
         assert_eq!(stats.get_number_of_correct_answers(), "0/0");
         assert_eq!(stats.get_number_of_remaining_questions(), 10);
@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn build_and_verify_stats_unlimited_questions() {
-        let stats = StatsLock::new();
+        let stats = Lock::new();
         stats.start(NumberOfQuestions::Infinite);
         assert_eq!(stats.get_number_of_correct_answers(), "0/0");
         assert_eq!(
@@ -281,7 +281,7 @@ mod tests {
 
     #[test]
     fn start_and_answer_some_questions_limited_questions() {
-        let stats = StatsLock::new();
+        let stats = Lock::new();
         stats.start(NumberOfQuestions::Limited(10));
 
         // 3 correct answers
@@ -313,7 +313,7 @@ mod tests {
 
     #[test]
     fn start_and_answer_some_questions_unlimited_questions() {
-        let stats = StatsLock::new();
+        let stats = Lock::new();
         stats.start(NumberOfQuestions::Infinite);
 
         // 3 correct answers
@@ -351,7 +351,7 @@ mod tests {
 
     #[test]
     fn repeating_wrong_answer_limited_questions() {
-        let stats = StatsLock::new();
+        let stats = Lock::new();
         stats.start(NumberOfQuestions::Limited(10));
 
         // 3 correct answers
@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn repeating_wrong_answer_unlimited_questions() {
-        let stats = StatsLock::new();
+        let stats = Lock::new();
         stats.start(NumberOfQuestions::Infinite);
 
         // 3 correct answers
@@ -425,7 +425,7 @@ mod tests {
 
     #[test]
     fn time_stats_no_questions() {
-        let stats = StatsLock::new();
+        let stats = Lock::new();
         stats.start(NumberOfQuestions::Infinite);
 
         sleep(Duration::from_millis(200));
@@ -444,7 +444,7 @@ mod tests {
 
     #[test]
     fn time_stats_one_question() {
-        let stats = StatsLock::new();
+        let stats = Lock::new();
         stats.start(NumberOfQuestions::Infinite);
 
         stats.start_new_question();
@@ -464,7 +464,7 @@ mod tests {
     /// This test is flaky and might fail in some unforeseen scenarios
     #[test]
     fn time_stats_two_questions() {
-        let stats = StatsLock::new();
+        let stats = Lock::new();
         stats.start(NumberOfQuestions::Infinite);
 
         stats.start_new_question();

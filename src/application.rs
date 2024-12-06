@@ -5,12 +5,12 @@ use std::sync::Arc;
 
 use crate::args::prelude::*;
 use crate::config::{BehaviourOnError, Config, NumberOfQuestions};
-use crate::question::{Question, QuestionGenerator};
+use crate::question::{Question, Generator};
 use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
 use crate::skill::times_table;
 use crate::skill::Skill;
-use crate::stats::StatsLock;
+use crate::stats;
 
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -24,10 +24,28 @@ const COMMANDS: [help::Command; 3] = [
 pub struct Application;
 
 impl Application {
+    /// Runs the application with options specified in `config`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// use practicestuff::{Application, Config};
+    ///
+    /// let args: Vec<_> = env::args().collect();
+    /// if let Ok(config) = Config::build(&args) {
+    ///     Application::run(config);
+    /// }
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if ctrlc crate fails to set the ctrl-c handler.
+    /// Panics if any internal error happens. It shouldn't, but it might.
     pub fn run(config: Config) {
         let app = Arc::new(AppImpl {
             config,
-            stats: StatsLock::new(),
+            stats: stats::Lock::new(),
         });
 
         let app_ref = app.clone();
@@ -60,7 +78,7 @@ impl Application {
 
 struct AppImpl {
     config: Config,
-    stats: StatsLock,
+    stats: stats::Lock,
 }
 
 impl AppImpl {
@@ -100,7 +118,7 @@ impl AppImpl {
     }
 
     fn play(&self) {
-        let generator = QuestionGenerator::new(self.number_of_questions(), self.get_skill());
+        let generator = Generator::new(self.number_of_questions(), self.get_skill());
 
         self.before_game();
 
@@ -122,7 +140,7 @@ impl AppImpl {
     }
 
     fn handle_question(&self, question: &Question) {
-        println!("\nQ: {}", question.question());
+        println!("\nQ: {}", question.prompt());
         print!("A: ");
         io::stdout().flush().expect("IO operation failed (flush)");
 

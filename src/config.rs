@@ -32,6 +32,18 @@ pub struct Config {
 }
 
 impl Config {
+    /// Builds a config from a list of `args`.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if any part of parsing goes wrong.
+    /// That include, but is not limited to:
+    ///
+    /// - unrecognised option/command option
+    /// - missing or incorrect option argument
+    /// - missing command
+    /// - ambiguous option/command options arguments
+    /// - impossible combination of options/command options
     pub fn build(args: &[String]) -> Result<Config, String> {
         if args.len() < 2 {
             return Err(Self::build_err_message(None));
@@ -109,7 +121,7 @@ impl BehaviourOnError {
 
 #[derive(Debug, Clone)]
 pub struct GeneralOptions {
-    pub arg_definitions: Vec<ArgDefinition>,
+    pub arg_definitions: Vec<Arg>,
     pub show_help: bool,
     pub show_version: bool,
 
@@ -159,27 +171,27 @@ impl GeneralOptions {
         })
     }
 
-    fn build_arg_definitions() -> Vec<ArgDefinition> {
+    fn build_arg_definitions() -> Vec<Arg> {
         vec![
-            ArgDefinition::builder()
+            Arg::builder()
                 .id(ARG_ID_HELP)
                 .short_name('h')
                 .long_name("help")
                 .description(vec!["Display this help message.".to_string()])
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(true)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id(ARG_ID_VERSION)
                 .short_name('v')
                 .long_name("version")
                 .description(vec!["Show version information.".to_string()])
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(true)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id(ARG_ID_NUMBER_OF_QUESTIONS)
                 .short_name('n')
                 .long_name("number-of-questions")
@@ -187,11 +199,11 @@ impl GeneralOptions {
                     "Specify the number of questions to ask (0 for infinite, default: 20)."
                         .to_string(),
                 ])
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
                 .default_value(ArgValue::UnsignedInt(20))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id(ARG_ID_DISABLE_LIVE_STATISTICS)
                 .short_name('d')
                 .long_name("disable-live-statistics")
@@ -199,11 +211,11 @@ impl GeneralOptions {
                     "Disable live statistics; statistics will not display between questions."
                         .to_string(),
                 ])
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(false)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id(ARG_ID_BEHAVIOUR_ON_ERROR)
                 .short_name('b')
                 .long_name("behaviour-on-error")
@@ -215,7 +227,7 @@ impl GeneralOptions {
                     "  - repeat: ask the question again until the correct answer is provided."
                         .to_string(),
                 ])
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::OneOfStr(
+                .kind(ArgKind::Value(ValueKind::OneOfStr(
                     vec![
                         BEHAVIOUR_ON_ERROR_CONTINUE.to_string(),
                         BEHAVIOUR_ON_ERROR_SHOW_CORRECT.to_string(),

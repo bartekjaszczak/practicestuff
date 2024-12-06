@@ -5,19 +5,19 @@ use crate::skill::Skill;
 
 #[derive(Clone)]
 pub struct Question {
-    question: String,
+    prompt: String,
     answer: String,
     alternative_answers: Vec<String>,
     allow_any_case: bool,
 }
 
 impl Question {
-    pub fn builder() -> QuestionBuilder {
-        QuestionBuilder::default()
+    pub fn builder() -> Builder {
+        Builder::default()
     }
 
-    pub fn question(&self) -> &String {
-        &self.question
+    pub fn prompt(&self) -> &String {
+        &self.prompt
     }
 
     pub fn correct_answer(&self) -> &String {
@@ -38,14 +38,14 @@ impl Question {
 }
 
 #[derive(Default)]
-pub struct QuestionBuilder {
+pub struct Builder {
     question: String,
     answer: String,
     alternative_answers: Vec<String>,
     allow_any_case: bool,
 }
 
-impl QuestionBuilder {
+impl Builder {
     pub fn question(mut self, question: &str) -> Self {
         self.question = question.to_string();
         self
@@ -70,7 +70,7 @@ impl QuestionBuilder {
         assert!(!self.question.is_empty(), "Question cannot be empty");
         assert!(!self.answer.is_empty(), "Answer cannot be empty");
         Question {
-            question: self.question,
+            prompt: self.question,
             answer: self.answer,
             alternative_answers: self.alternative_answers,
             allow_any_case: self.allow_any_case,
@@ -78,19 +78,19 @@ impl QuestionBuilder {
     }
 }
 
-pub struct QuestionGenerator<'a> {
+pub struct Generator<'a> {
     number_of_questions: NumberOfQuestions,
     current_question: Cell<u32>,
     skill: &'a dyn Skill,
     cache: RefCell<Option<Vec<Question>>>,
 }
 
-impl<'a> QuestionGenerator<'a> {
+impl<'a> Generator<'a> {
     pub fn new(
         number_of_questions: NumberOfQuestions,
         skill: &'a dyn Skill,
-    ) -> QuestionGenerator<'a> {
-        QuestionGenerator {
+    ) -> Generator<'a> {
+        Generator {
             number_of_questions,
             current_question: Cell::new(0),
             skill,
@@ -143,7 +143,7 @@ impl<'a> QuestionGenerator<'a> {
 mod tests {
     use std::{fmt::Debug, sync::RwLock};
 
-    use crate::skill::SkillBase;
+    use crate::skill::Base;
 
     use super::*;
 
@@ -174,7 +174,7 @@ mod tests {
             .allow_any_case(true)
             .build();
 
-        assert_eq!(question.question, "Question");
+        assert_eq!(question.prompt, "Question");
         assert_eq!(question.answer, "Answer");
         assert_eq!(
             question.alternative_answers,
@@ -190,7 +190,7 @@ mod tests {
             .answer("Answer")
             .build();
 
-        assert_eq!(question.question(), "Question");
+        assert_eq!(question.prompt(), "Question");
         assert_eq!(question.correct_answer(), "Answer");
     }
 
@@ -237,7 +237,7 @@ mod tests {
         generate_questions_calls: RwLock<u32>,
     }
 
-    impl SkillBase for SkillMock {
+    impl Base for SkillMock {
         fn wants_to_print_help(&self) -> bool {
             false
         }
@@ -281,7 +281,7 @@ mod tests {
         let number_of_questions = 5;
         let skill_mock = SkillMock::new();
         let generator =
-            QuestionGenerator::new(NumberOfQuestions::Limited(number_of_questions), &skill_mock);
+            Generator::new(NumberOfQuestions::Limited(number_of_questions), &skill_mock);
         for _ in 0..number_of_questions {
             assert!(generator.has_next_question());
             let result = generator.next_question();
@@ -298,7 +298,7 @@ mod tests {
     fn generator_infinite_mode() {
         let number_of_questions = 10;
         let skill_mock = SkillMock::new();
-        let generator = QuestionGenerator::new(NumberOfQuestions::Infinite, &skill_mock);
+        let generator = Generator::new(NumberOfQuestions::Infinite, &skill_mock);
         for i in 0..number_of_questions {
             assert!(generator.has_next_question());
             let result = generator.next_question();
@@ -311,7 +311,7 @@ mod tests {
     #[derive(Debug)]
     struct FaultySkillMock;
 
-    impl SkillBase for FaultySkillMock {
+    impl Base for FaultySkillMock {
         fn wants_to_print_help(&self) -> bool {
             false
         }
@@ -336,7 +336,7 @@ mod tests {
     #[should_panic(expected = "Skill did not generate correct amount of questions")]
     fn not_enough_questions_generated() {
         let number_of_questions = 5;
-        let generator = QuestionGenerator::new(
+        let generator = Generator::new(
             NumberOfQuestions::Limited(number_of_questions),
             &FaultySkillMock,
         );

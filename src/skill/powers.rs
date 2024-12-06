@@ -2,7 +2,7 @@ use std::iter;
 
 use rand::Rng;
 
-use super::SkillBase;
+use super::Base;
 use crate::application::APP_NAME;
 use crate::args::prelude::*;
 use crate::question::Question;
@@ -16,7 +16,7 @@ const ARG_ID_UPPER_BOUNDARY: &str = "upper_boundary";
 
 #[derive(Debug)]
 pub struct Powers {
-    arg_definitions: Vec<ArgDefinition>,
+    arg_definitions: Vec<Arg>,
     show_help: bool,
 
     base: u32,
@@ -99,45 +99,45 @@ impl Powers {
         format!("Practice powers with a customizable base and exponent range. By default, the base is {default_base}, with exponents ranging from {default_lower_boundary} to {default_upper_boundary}.")
     }
 
-    fn build_arg_definitions() -> Vec<ArgDefinition> {
+    fn build_arg_definitions() -> Vec<Arg> {
         vec![
-            ArgDefinition::builder()
+            Arg::builder()
                 .id(ARG_ID_HELP)
                 .short_name('h')
                 .long_name("help")
                 .description(vec!["Display help for powers command.".to_string()])
-                .kind(ArgKindDefinition::Flag)
+                .kind(ArgKind::Flag)
                 .stop_parsing(true)
                 .default_value(ArgValue::Bool(false))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id(ARG_ID_BASE)
                 .short_name('b')
                 .long_name("base")
                 .description(vec!["Set the base for powers (default: 2).".to_string()])
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
                 .default_value(ArgValue::UnsignedInt(2))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id(ARG_ID_LOWER_BOUNDARY)
                 .short_name('l')
                 .long_name("lower-boundary")
                 .description(vec![
                     "Set the minimum exponent to use in questions (default: 1).".to_string(),
                 ])
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
                 .default_value(ArgValue::UnsignedInt(1))
                 .build(),
-            ArgDefinition::builder()
+            Arg::builder()
                 .id(ARG_ID_UPPER_BOUNDARY)
                 .short_name('u')
                 .long_name("upper-boundary")
                 .description(vec![
                     "Set the maximum exponent to use in questions (default: 16).".to_string(),
                 ])
-                .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
+                .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
                 .default_value(ArgValue::UnsignedInt(16))
                 .build(),
@@ -187,7 +187,7 @@ impl Powers {
     }
 }
 
-impl SkillBase for Powers {
+impl Base for Powers {
     fn generate_questions(&self, count: u32) -> Vec<Question> {
         iter::repeat_with(|| self.generate_question())
             .take(count as usize)
@@ -302,7 +302,7 @@ mod tests {
         let args = ["-u".to_string(), "1".to_string()];
         let powers = Powers::build(&args).expect("Should build correctly");
         let question = powers.generate_question();
-        assert_eq!(question.question(), "2^1");
+        assert_eq!(question.prompt(), "2^1");
         assert_eq!(question.correct_answer(), "2");
         assert!(question.is_answer_correct("2"));
     }
@@ -315,7 +315,7 @@ mod tests {
         assert_eq!(questions.len(), 10);
         assert!(questions
             .iter()
-            .all(|question| question.question().starts_with("3^")));
+            .all(|question| question.prompt().starts_with("3^")));
     }
 
     #[test]

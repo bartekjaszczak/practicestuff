@@ -7,14 +7,14 @@ use std::fmt::Debug;
 use powers::Powers;
 use super::question::Question;
 
-pub trait SkillBase {
+pub trait Base {
     fn wants_to_print_help(&self) -> bool;
     fn get_help_text(&self) -> String;
     fn generate_questions(&self, count: u32) -> Vec<Question>;
 }
 
-pub trait Skill: SkillBase + Debug + Sync + Send {}
-impl<T: SkillBase + Debug + Sync + Send> Skill for T {}
+pub trait Skill: Base + Debug + Sync + Send {}
+impl<T: Base + Debug + Sync + Send> Skill for T {}
 
 pub fn build(command: &str, args: &[String]) -> Result<Box<dyn Skill>, String> {
     match command {

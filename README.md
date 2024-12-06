@@ -47,7 +47,7 @@ Initial list of skills:
 
 ## General
 
-- address all clippy's warnings
+DONE
 
 ## Powers
 
