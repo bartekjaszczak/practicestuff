@@ -31,13 +31,28 @@ impl<'a> Options<'a> {
     }
 }
 
-pub fn build(usage: &str, options: &Options, commands: &[Command]) -> String {
+/// Builds help text
+///
+/// * `usage`: "Usage:" text.
+/// * `additional_info`: Additional text displayed just under the usage text.
+/// * `options`: List of options to be displayed.
+/// * `commands`: List of commands to be displayed.
+pub fn build(
+    usage: &str,
+    additional_info: Option<&str>,
+    options: &Options,
+    commands: &[Command],
+) -> String {
     let mut help = String::new();
 
     help.push_str(usage);
 
-    let definitions = &options.definitions;
+    if let Some(info) = additional_info {
+        help.push('\n');
+        help.push_str(info);
+    }
 
+    let definitions = &options.definitions;
     let first_column_width = calculate_first_column_width(definitions, commands);
 
     if !definitions.is_empty() {
@@ -315,7 +330,7 @@ mod tests {
             .build()];
         let options = Options::new("Options", &definitions);
 
-        let result = super::build("Usage: something something", &options, &[]);
+        let result = super::build("Usage: something something", None, &options, &[]);
         assert!(result.contains("Usage: something something"));
         assert!(result.contains("Options:"));
         assert!(result.contains("--some-name"));
@@ -328,6 +343,7 @@ mod tests {
 
         let result = super::build(
             "Usage: something something",
+            None,
             &Options::new("Options", &[]),
             &commands,
         );
@@ -339,9 +355,23 @@ mod tests {
     }
 
     #[test]
-    fn full_help() {
-        let usage = "Usage: some text";
+    fn include_additional_info() {
+        let usage = "Some usage";
+        let additional_info = "Some additional info";
 
+        let result = super::build(
+            usage,
+            Some(additional_info),
+            &Options::new("Options", &[]),
+            &[],
+        );
+
+        assert!(result.contains(usage));
+        assert!(result.contains(additional_info));
+    }
+
+    #[test]
+    fn full_help() {
         let definitions = [
             ArgDefinition::builder()
                 .id("arg1")
@@ -377,8 +407,9 @@ mod tests {
                 .build(),
         ];
 
+        let usage = "Usage: some text";
+        let additional_info = "Some additional info";
         let options = Options::new("Custom options header", &definitions);
-
         let commands = [
             Command::new("first-command", ""),
             Command::new("second", "This one has a description."),
@@ -386,6 +417,7 @@ mod tests {
 
         let mut expected = String::new();
         expected.push_str("Usage: some text\n");
+        expected.push_str("Some additional info\n");
         expected.push('\n');
         expected.push_str("Custom options header:\n");
         expected.push_str("  -a, --first-name   one-line description\n");
@@ -398,6 +430,9 @@ mod tests {
         expected.push_str("  first-command      \n");
         expected.push_str("  second             This one has a description.\n");
 
-        assert_eq!(super::build(usage, &options, &commands), expected);
+        assert_eq!(
+            super::build(usage, Some(additional_info), &options, &commands),
+            expected
+        );
     }
 }

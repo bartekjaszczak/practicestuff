@@ -176,7 +176,7 @@ impl SkillBase for Powers {
     fn get_help_text(&self) -> String {
         let definitions = &Self::get_arg_definitions();
         let options = help::Options::new("Powers options", definitions);
-        help::build(&Self::usage(), &options, &[])
+        help::build(&Self::usage(), None, &options, &[])
     }
 }
 

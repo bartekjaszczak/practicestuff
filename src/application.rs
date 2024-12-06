@@ -47,10 +47,21 @@ impl Application {
         format!("Try '{APP_NAME} --help' for more information.")
     }
 
+    pub(crate) fn additional_info() -> String {
+        format!(
+            "To display options and details for a specific command, run '{APP_NAME} <command> -h'."
+        )
+    }
+
     fn print_help() {
         let definitions = &GeneralOptions::get_arg_definitions();
         let options = help::Options::new("General options", definitions);
-        let help_text = help::build(&Application::usage(), &options, &COMMANDS);
+        let help_text = help::build(
+            &Application::usage(),
+            Some(&Application::additional_info()),
+            &options,
+            &COMMANDS,
+        );
         println!("{help_text}");
     }
 

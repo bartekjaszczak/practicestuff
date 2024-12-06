@@ -47,7 +47,6 @@ Initial list of skills:
 
 ## General
 
-- add help examples (including showing skill help)
 - tests for config module
 - address all clippy's warnings
 - organise includes (std, external, internal, relative)
