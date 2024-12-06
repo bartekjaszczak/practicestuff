@@ -39,20 +39,19 @@ impl Application {
         app.run();
     }
 
-    pub fn usage() -> String {
+    pub(crate) fn usage() -> String {
         format!("Usage: {APP_NAME} [option]... command [command_option]...")
     }
 
-    pub fn help_prompt() -> String {
+    pub(crate) fn help_prompt() -> String {
         format!("Try '{APP_NAME} --help' for more information.")
     }
 
-    pub fn additional_info() -> String {
+    fn additional_info() -> String {
         format!(
             "To display options and details for a specific command, run '{APP_NAME} <command> -h'."
         )
     }
-
 
     fn print_version() {
         println!("{APP_NAME} {VERSION}");

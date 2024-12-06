@@ -19,7 +19,7 @@ const BEHAVIOUR_ON_ERROR_CONTINUE: &str = "continue";
 const BEHAVIOUR_ON_ERROR_SHOW_CORRECT: &str = "showcorrect";
 const BEHAVIOUR_ON_ERROR_REPEAT: &str = "repeat";
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NumberOfQuestions {
     Limited(u32),
     Infinite,
@@ -89,7 +89,7 @@ impl Config {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum BehaviourOnError {
     NextQuestion,
     ShowCorrect,
@@ -233,15 +233,208 @@ impl GeneralOptions {
 mod tests {
     use super::*;
 
-    // Config:
-    //  - build: args < 2 triggers error msg
-    //  - build: show help / show version returns no skill but options are set
-    //  - build: missing command
-    //  - build: correct build with skill
-    //  - split args tests
-    //  - build err message tests
-    // Behaviour on error:
-    //  - translation string -> enum (from_string)
-    // General options:
-    //  - build: 1 or 2 successful builds with varying options
+    #[test]
+    #[should_panic(expected = "Usage")]
+    fn build_not_enough_args_0() {
+        let args = [];
+        Config::build(&args).expect("should fail due to missing args");
+    }
+
+    #[test]
+    #[should_panic(expected = "Usage")]
+    fn build_not_enough_args_1() {
+        let args = ["some_arg".to_string()];
+        Config::build(&args).expect("should fail due to missing args");
+    }
+
+    #[test]
+    fn build_show_help() {
+        let args = ["command".to_string(), "--help".to_string()];
+        let config = Config::build(&args).expect("should build successfully");
+        assert!(config.options.show_help);
+        assert!(!config.options.show_version);
+        assert!(config.skill.is_none());
+    }
+
+    #[test]
+    fn build_show_version() {
+        let args = ["command".to_string(), "--version".to_string()];
+        let config = Config::build(&args).expect("should build successfully");
+        assert!(!config.options.show_help);
+        assert!(config.options.show_version);
+        assert!(config.skill.is_none());
+    }
+
+    #[test]
+    #[should_panic(expected = "missing command")]
+    fn build_missing_command() {
+        let args = [
+            "command".to_string(),
+            "--number-of-questions=10".to_string(),
+        ];
+        Config::build(&args).expect("should fail due to missing command");
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid option")]
+    fn build_unrecognised_command() {
+        let args = ["command".to_string(), "unrecognised".to_string()];
+        Config::build(&args).expect("should fail due to unrecognised command");
+    }
+
+    #[test]
+    fn build_successful_no_args() {
+        let args = ["command".to_string(), "powers".to_string()];
+        let config = Config::build(&args).expect("should build successfully");
+        assert!(!config.options.show_help);
+        assert!(!config.options.show_version);
+        assert_eq!(
+            config.options.number_of_questions,
+            NumberOfQuestions::Limited(20)
+        );
+        assert!(!config.options.disable_live_statistics);
+        assert_eq!(config.options.behaviour_on_error, BehaviourOnError::ShowCorrect);
+        assert!(config.skill.is_some());
+    }
+
+    #[test]
+    fn build_successful_all_args_used() {
+        let args = [
+            "command".to_string(),
+            "--number-of-questions=10".to_string(),
+            "--disable-live-statistics".to_string(),
+            "--behaviour-on-error=repeat".to_string(),
+            "powers".to_string(),
+        ];
+        let config = Config::build(&args).expect("should build successfully");
+        assert!(!config.options.show_help);
+        assert!(!config.options.show_version);
+        assert_eq!(
+            config.options.number_of_questions,
+            NumberOfQuestions::Limited(10)
+        );
+        assert!(config.options.disable_live_statistics);
+        assert_eq!(config.options.behaviour_on_error, BehaviourOnError::Repeat);
+        assert!(config.skill.is_some());
+
+        // Different set of args
+        let args = [
+            "command".to_string(),
+            "-n".to_string(),
+            "0".to_string(),
+            "-d".to_string(),
+            "-b".to_string(),
+            "continue".to_string(),
+            "powers".to_string(),
+        ];
+        let config = Config::build(&args).expect("should build successfully");
+        assert!(!config.options.show_help);
+        assert!(!config.options.show_version);
+        assert_eq!(
+            config.options.number_of_questions,
+            NumberOfQuestions::Infinite
+        );
+        assert!(config.options.disable_live_statistics);
+        assert_eq!(
+            config.options.behaviour_on_error,
+            BehaviourOnError::NextQuestion
+        );
+        assert!(config.skill.is_some());
+    }
+
+    #[test]
+    fn args_split() {
+        let args = [
+            "--number-of-questions=10".to_string(),
+            "-d".to_string(),            // Disable live stats
+            "-b".to_string(),            // Set behaviour on error to...
+            "repeat".to_string(),        // ...repeat
+            "powers".to_string(),        // some command
+            "-a".to_string(),            // some command args
+            "--some-arg=42".to_string(), // another command arg
+        ];
+        let (options, command, command_options) = Config::split_args(&args);
+
+        assert_eq!(
+            options,
+            [
+                "--number-of-questions=10".to_string(),
+                "-d".to_string(),
+                "-b".to_string(),
+                "repeat".to_string()
+            ]
+        );
+        assert_eq!(command, Some("powers".to_string()));
+        assert_eq!(
+            command_options,
+            ["-a".to_string(), "--some-arg=42".to_string()]
+        );
+    }
+
+    #[test]
+    fn args_split_unrecognised_command() {
+        let args = [
+            "--number-of-questions=10".to_string(),
+            "-d".to_string(),            // Disable live stats
+            "-b".to_string(),            // Set behaviour on error to...
+            "somecommand".to_string(),   // ...repeat
+            "-a".to_string(),            // some command args
+            "--some-arg=42".to_string(), // another command arg
+        ];
+        let (options, command, command_options) = Config::split_args(&args);
+
+        assert_eq!(
+            options,
+            args,
+            "command not recognised, hence all args are treated as general args"
+        );
+        assert_eq!(command, None);
+        assert!(command_options.is_empty());
+    }
+
+    #[test]
+    fn args_split_no_general_options() {
+        let args = [
+            "powers".to_string(),
+            "-a".to_string(),
+            "--some-arg=42".to_string(),
+        ];
+        let (options, command, command_options) = Config::split_args(&args);
+
+        assert!(options.is_empty());
+        assert_eq!(command, Some("powers".to_string()));
+        assert_eq!(
+            command_options,
+            ["-a".to_string(), "--some-arg=42".to_string()]
+        );
+    }
+
+    #[test]
+    fn build_error_message() {
+        let msg = "some error message";
+        let error_message = Config::build_err_message(Some(msg.to_string()));
+        assert!(error_message.contains(msg));
+        assert!(error_message.contains(&Application::usage()));
+        assert!(error_message.contains(&Application::help_prompt()));
+
+        let error_message = Config::build_err_message(None);
+        assert!(error_message.contains(&Application::usage()));
+        assert!(error_message.contains(&Application::help_prompt()));
+    }
+
+    #[test]
+    fn parse_behaviour_on_error() {
+        assert_eq!(
+            BehaviourOnError::from_string(BEHAVIOUR_ON_ERROR_CONTINUE),
+            BehaviourOnError::NextQuestion
+        );
+        assert_eq!(
+            BehaviourOnError::from_string(BEHAVIOUR_ON_ERROR_SHOW_CORRECT),
+            BehaviourOnError::ShowCorrect
+        );
+        assert_eq!(
+            BehaviourOnError::from_string(BEHAVIOUR_ON_ERROR_REPEAT),
+            BehaviourOnError::Repeat
+        );
+    }
 }
