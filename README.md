@@ -47,12 +47,11 @@ Initial list of skills:
 
 ## General
 
-- tests for config module
-- tests for skill module
-- integration tests
 - add help examples (including showing skill help)
+- tests for config module
 - address all clippy's warnings
 - organise includes (std, external, internal, relative)
+- integration tests
 
 ## Powers
 

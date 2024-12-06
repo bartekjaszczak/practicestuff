@@ -68,8 +68,10 @@ impl AppImpl {
     pub fn run(&self) {
         if self.config.options.show_help {
             Application::print_help();
+            return;
         } else if self.config.options.show_version {
             Application::print_version();
+            return;
         } else if let Some(skill) = &self.config.skill {
             if skill.wants_to_print_help() {
                 println!("{}", skill.get_help_text());
