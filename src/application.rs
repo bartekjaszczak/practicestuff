@@ -241,9 +241,6 @@ impl AppImpl {
                 BehaviourOnError::Repeat => feedback.push_str(" Try again:"),
                 BehaviourOnError::NextQuestion => (),
             }
-            if let BehaviourOnError::ShowCorrect = self.config.options.behaviour_on_error {
-                feedback.push_str(&format!(" Correct answer: {correct_answer}"));
-            }
         }
         println!("{feedback}");
     }

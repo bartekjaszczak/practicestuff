@@ -48,8 +48,6 @@ Initial list of skills:
 ## General
 
 - address all clippy's warnings
-- integration tests
-- tests for application module
 
 ## Powers
 
