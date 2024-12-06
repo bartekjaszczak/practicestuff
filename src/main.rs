@@ -1,5 +1,6 @@
-use practicestuff::{Application, Config};
 use std::{env, process};
+
+use practicestuff::{Application, Config};
 
 fn main() {
     let args: Vec<_> = env::args().collect();

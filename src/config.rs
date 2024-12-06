@@ -1,11 +1,11 @@
+use std::cmp;
+
 use crate::application::{self, Application};
 use crate::args::prelude::*;
 use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
 use crate::skill::times_table;
 use crate::skill::{self, Skill};
-
-use std::cmp;
 
 const COMMANDS: [&str; 3] = [powers::CMD, times_table::CMD, doomsday_algorithm::CMD];
 
@@ -184,7 +184,7 @@ impl GeneralOptions {
                 .short_name('n')
                 .long_name("number-of-questions")
                 .description(vec![
-                    "Specify the number of questions to ask (0 for infinite, default: 20)"
+                    "Specify the number of questions to ask (0 for infinite, default: 20)."
                         .to_string(),
                 ])
                 .kind(ArgKindDefinition::Value(ValueKindDefinition::UnsignedInt))
@@ -293,7 +293,10 @@ mod tests {
             NumberOfQuestions::Limited(20)
         );
         assert!(!config.options.disable_live_statistics);
-        assert_eq!(config.options.behaviour_on_error, BehaviourOnError::ShowCorrect);
+        assert_eq!(
+            config.options.behaviour_on_error,
+            BehaviourOnError::ShowCorrect
+        );
         assert!(config.skill.is_some());
     }
 
@@ -384,8 +387,7 @@ mod tests {
         let (options, command, command_options) = Config::split_args(&args);
 
         assert_eq!(
-            options,
-            args,
+            options, args,
             "command not recognised, hence all args are treated as general args"
         );
         assert_eq!(command, None);

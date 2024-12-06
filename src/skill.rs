@@ -7,7 +7,6 @@ use std::fmt::Debug;
 use powers::Powers;
 use super::question::Question;
 
-
 pub trait SkillBase {
     fn wants_to_print_help(&self) -> bool;
     fn get_help_text(&self) -> String;
