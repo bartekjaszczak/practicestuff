@@ -1,7 +1,4 @@
-use std::{
-    borrow::Borrow,
-    cell::{Cell, RefCell},
-};
+use std::cell::{Cell, RefCell};
 
 use crate::{config::NumberOfQuestions, skill::Skill};
 
@@ -338,8 +335,10 @@ mod tests {
     #[should_panic(expected = "Skill did not generate correct amount of questions")]
     fn not_enough_questions_generated() {
         let number_of_questions = 5;
-        let generator =
-            QuestionGenerator::new(NumberOfQuestions::Limited(number_of_questions), &FaultySkillMock);
+        let generator = QuestionGenerator::new(
+            NumberOfQuestions::Limited(number_of_questions),
+            &FaultySkillMock,
+        );
         let question = generator.next_question();
     }
 }

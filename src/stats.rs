@@ -107,6 +107,7 @@ impl Stats {
 
     pub fn start_new_question(&mut self) {
         self.current_question_start_time = Instant::now();
+        self.current_question_answered = false;
     }
 
     pub fn answer_question(&mut self, correct: bool) {
@@ -250,14 +251,240 @@ impl Stats {
 
 #[cfg(test)]
 mod tests {
+    use std::thread::sleep;
+
     use super::*;
-    // - build + verify data
-    // - (start + answer) a few times + verify: remaining questions, number of answers,
-    //                                          correct answers, size of time_per_question,
-    //                                          accuracy
-    // - total acc verification (limited + unlimited)
-    // - total time ???
-    // - min/max/avg question time? + last question time
-    // - multiple answers + verify behaviour
-    // - show summary (unlimited/limited)
+
+    #[test]
+    fn build_and_verify_stats_limited_questions() {
+        let stats = StatsLock::new();
+        stats.start(NumberOfQuestions::Limited(10));
+        assert_eq!(stats.get_number_of_correct_answers(), "0/0");
+        assert_eq!(stats.get_number_of_remaining_questions(), 10);
+        assert_eq!(stats.get_total_accuracy(), "0.00%");
+        assert_eq!(stats.get_current_accuracy(), "0.00%");
+    }
+
+    #[test]
+    fn build_and_verify_stats_unlimited_questions() {
+        let stats = StatsLock::new();
+        stats.start(NumberOfQuestions::Infinite);
+        assert_eq!(stats.get_number_of_correct_answers(), "0/0");
+        assert_eq!(
+            stats.get_number_of_remaining_questions(),
+            0,
+            "Should always return 0 for infinite mode"
+        );
+        assert_eq!(stats.get_total_accuracy(), "0.00%");
+        assert_eq!(stats.get_current_accuracy(), "0.00%");
+    }
+
+    #[test]
+    fn start_and_answer_some_questions_limited_questions() {
+        let stats = StatsLock::new();
+        stats.start(NumberOfQuestions::Limited(10));
+
+        // 3 correct answers
+        for _ in 0..3 {
+            stats.start_new_question();
+            stats.answer_question(true);
+        }
+
+        assert_eq!(stats.read().time_per_question.len(), 3);
+
+        // 3 incorrect answers
+        for _ in 0..3 {
+            stats.start_new_question();
+            stats.answer_question(false);
+        }
+
+        assert_eq!(stats.read().time_per_question.len(), 6);
+
+        assert_eq!(stats.get_number_of_correct_answers(), "3/6");
+        assert_eq!(stats.get_number_of_remaining_questions(), 4);
+        assert_eq!(stats.get_total_accuracy(), "30.00%");
+        assert_eq!(stats.get_current_accuracy(), "50.00%");
+
+        let summary = stats.get_summary();
+        assert!(summary.contains("Questions total: 10"));
+        assert!(summary.contains("answers: 6"));
+        assert!(summary.contains("skipped: 4"));
+    }
+
+    #[test]
+    fn start_and_answer_some_questions_unlimited_questions() {
+        let stats = StatsLock::new();
+        stats.start(NumberOfQuestions::Infinite);
+
+        // 3 correct answers
+        for _ in 0..3 {
+            stats.start_new_question();
+            stats.answer_question(true);
+        }
+
+        assert_eq!(stats.read().time_per_question.len(), 3);
+
+        // 3 incorrect answers
+        for _ in 0..3 {
+            stats.start_new_question();
+            stats.answer_question(false);
+        }
+
+        assert_eq!(stats.read().time_per_question.len(), 6);
+
+        assert_eq!(stats.get_number_of_correct_answers(), "3/6");
+        assert_eq!(
+            stats.get_number_of_remaining_questions(),
+            0,
+            "Should always return 0 for infinite mode"
+        );
+        assert_eq!(
+            stats.get_total_accuracy(),
+            "0.00%",
+            "Should always return 0.00% for infinite mode"
+        );
+        assert_eq!(stats.get_current_accuracy(), "50.00%");
+
+        let summary = stats.get_summary();
+        assert!(summary.contains("Questions total: 6"));
+    }
+
+    #[test]
+    fn repeating_wrong_answer_limited_questions() {
+        let stats = StatsLock::new();
+        stats.start(NumberOfQuestions::Limited(10));
+
+        // 3 correct answers
+        for _ in 0..3 {
+            stats.start_new_question();
+            stats.answer_question(true);
+        }
+
+        assert_eq!(stats.read().time_per_question.len(), 3);
+
+        // Answering incorrectly first (Repeat mode)
+        stats.start_new_question();
+        stats.answer_question(false);
+        assert_eq!(stats.read().time_per_question.len(), 4);
+        stats.answer_question(false);
+        assert_eq!(stats.read().time_per_question.len(), 4);
+        stats.answer_question(false);
+        assert_eq!(stats.read().time_per_question.len(), 4);
+        stats.answer_question(true);
+        assert_eq!(stats.read().time_per_question.len(), 4);
+
+        assert_eq!(
+            stats.get_number_of_correct_answers(),
+            "3/4",
+            "Answering incorrectly for the first time == incorrect answer"
+        );
+        assert_eq!(stats.get_number_of_remaining_questions(), 6);
+        assert_eq!(stats.get_total_accuracy(), "30.00%");
+        assert_eq!(stats.get_current_accuracy(), "75.00%");
+
+        let summary = stats.get_summary();
+        assert!(summary.contains("Questions total: 10"));
+        assert!(summary.contains("answers: 4"));
+        assert!(summary.contains("skipped: 6"));
+    }
+
+    #[test]
+    fn repeating_wrong_answer_unlimited_questions() {
+        let stats = StatsLock::new();
+        stats.start(NumberOfQuestions::Infinite);
+
+        // 3 correct answers
+        for _ in 0..3 {
+            stats.start_new_question();
+            stats.answer_question(true);
+        }
+
+        assert_eq!(stats.read().time_per_question.len(), 3);
+
+        // Answering incorrectly first (Repeat mode)
+        stats.start_new_question();
+        stats.answer_question(false);
+        assert_eq!(stats.read().time_per_question.len(), 4);
+        stats.answer_question(false);
+        assert_eq!(stats.read().time_per_question.len(), 4);
+        stats.answer_question(false);
+        assert_eq!(stats.read().time_per_question.len(), 4);
+        stats.answer_question(true);
+        assert_eq!(stats.read().time_per_question.len(), 4);
+
+        assert_eq!(
+            stats.get_number_of_correct_answers(),
+            "3/4",
+            "Answering incorrectly for the first time == incorrect answer"
+        );
+        assert_eq!(stats.get_current_accuracy(), "75.00%");
+
+        let summary = stats.get_summary();
+        assert!(summary.contains("Questions total: 4"));
+    }
+
+    #[test]
+    fn time_stats_no_questions() {
+        let stats = StatsLock::new();
+        stats.start(NumberOfQuestions::Infinite);
+
+        sleep(Duration::from_millis(200));
+
+        let max_time = stats.get_max_question_time();
+        let min_time = stats.get_min_question_time();
+        let avg_time = stats.get_avg_question_time();
+
+        assert_eq!(max_time, "0.0s");
+        assert_eq!(min_time, "0.0s");
+        assert_eq!(avg_time, "0.0s");
+
+        let total_time = stats.get_total_time();
+        assert_ne!(total_time, "0.0s");
+    }
+
+    #[test]
+    fn time_stats_one_question() {
+        let stats = StatsLock::new();
+        stats.start(NumberOfQuestions::Infinite);
+
+        stats.start_new_question();
+        sleep(Duration::from_millis(200));
+        stats.answer_question(true);
+
+        let max_time = stats.get_max_question_time();
+        let min_time = stats.get_min_question_time();
+        let avg_time = stats.get_avg_question_time();
+
+        assert_eq!(max_time, min_time);
+        assert_eq!(min_time, avg_time);
+
+        assert_ne!(max_time, "0.0s");
+    }
+
+    /// This test is flaky and might fail in some unforeseen scenarios
+    #[test]
+    fn time_stats_two_questions() {
+        let stats = StatsLock::new();
+        stats.start(NumberOfQuestions::Infinite);
+
+        stats.start_new_question();
+        sleep(Duration::from_millis(50));
+        stats.answer_question(true);
+
+        stats.start_new_question();
+        sleep(Duration::from_millis(400));
+        stats.answer_question(true);
+
+        let max_time = stats.get_max_question_time();
+        let min_time = stats.get_min_question_time();
+        let avg_time = stats.get_avg_question_time();
+
+        assert_ne!(max_time, min_time);
+        assert_ne!(min_time, avg_time);
+        assert_ne!(max_time, avg_time);
+
+        assert_ne!(max_time, "0.0s", "Should be **more or less** 0.4s");
+        assert_ne!(min_time, "0.0s", "Should be **more or less** 0.05s");
+        assert_ne!(avg_time, "0.0s", "Should be **more or less** 0.225s");
+    }
 }

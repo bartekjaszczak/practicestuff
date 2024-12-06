@@ -50,8 +50,6 @@ Initial list of skills:
 - tests for config module
 - tests for skill module
 - integration tests
-- tests for stats module
-- tests for question module
 - add help examples (including showing skill help)
 - address all clippy's warnings
 - organise includes (std, external, internal, relative)
