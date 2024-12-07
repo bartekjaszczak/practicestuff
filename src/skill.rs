@@ -4,9 +4,10 @@ pub mod times_table;
 
 use std::fmt::Debug;
 
+use super::question::Question;
+use doomsday_algorithm::Doomsday;
 use powers::Powers;
 use times_table::TimesTable;
-use super::question::Question;
 
 pub trait Base {
     fn wants_to_print_help(&self) -> bool;
@@ -21,7 +22,7 @@ pub fn build(command: &str, args: &[String]) -> Result<Box<dyn Skill>, String> {
     match command {
         powers::CMD => Ok(Box::new(Powers::build(args)?)),
         times_table::CMD => Ok(Box::new(TimesTable::build(args)?)),
-        doomsday_algorithm::CMD => todo!(),
+        doomsday_algorithm::CMD => Ok(Box::new(Doomsday::build(args)?)),
         _ => unreachable!("all commands should be added here"),
     }
 }
@@ -48,6 +49,13 @@ mod tests {
     #[test]
     fn build_times_table() {
         let command = times_table::CMD;
+        let args = [];
+        build(command, &args).unwrap();
+    }
+
+    #[test]
+    fn build_doomsday_algorithm() {
+        let command = doomsday_algorithm::CMD;
         let args = [];
         build(command, &args).unwrap();
     }

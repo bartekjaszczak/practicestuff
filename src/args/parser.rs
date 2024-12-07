@@ -113,6 +113,7 @@ fn validate_and_create_arg(
                 return Err(format!("option '{arg}' requires an argument"));
             };
             match &value_kind {
+                ValueKind::Int => ArgValue::Int(parse_i32(arg_value)?),
                 ValueKind::UnsignedInt => ArgValue::UnsignedInt(parse_u32(arg_value)?),
                 ValueKind::OneOfStr(possible_values) => {
                     ArgValue::Str(validate_one_of_str(arg_value, possible_values)?.to_string())
@@ -122,6 +123,13 @@ fn validate_and_create_arg(
     };
 
     Ok(ArgValuePair::new(arg_definition.id(), value))
+}
+
+fn parse_i32(value: &str) -> Result<i32, String> {
+    match value.parse::<i32>() {
+        Ok(number) => Ok(number),
+        _ => Err(format!("invalid option argument: '{value}'"))
+    }
 }
 
 fn parse_u32(value: &str) -> Result<u32, String> {
@@ -145,6 +153,40 @@ fn validate_one_of_str<'a>(value: &'a str, possible_values: &[String]) -> Result
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn i32_parsing() {
+        let i32_max = i32::MAX.to_string();
+        let i32_min = i32::MIN.to_string();
+        let correct = [
+            (i32_max.as_str(), i32::MAX),
+            (i32_min.as_str(), i32::MIN),
+            ("0", 0),
+            ("42", 42),
+            ("-1", -1),
+            ("-123456", -123_456),
+            ("1234567", 1_234_567),
+        ];
+
+        for (value, expected) in &correct {
+            assert_eq!(parse_i32(value).expect("test failed"), *expected);
+        }
+
+        let i32_max_plus_1 = (i64::from(i32::MAX) + 1).to_string();
+        let i32_min_minus_1 = (i64::from(i32::MIN) - 1).to_string();
+        let incorrect = [
+            i32_max_plus_1.as_str(),
+            i32_min_minus_1.as_str(),
+            "qwerty",
+            "a123a",
+            "12a",
+            "a12",
+        ];
+
+        for value in incorrect {
+            assert!(parse_i32(value).is_err());
+        }
+    }
 
     #[test]
     fn u32_parsing() {
@@ -216,8 +258,8 @@ mod tests {
         let arg_definition = Arg::builder()
             .id(arg)
             .short_name('s')
-            .kind(ArgKind::Value(ValueKind::UnsignedInt))
-            .default_value(ArgValue::UnsignedInt(42))
+            .kind(ArgKind::Value(ValueKind::Int))
+            .default_value(ArgValue::Int(42))
             .build();
 
         validate_and_create_arg(arg, arg_value, &arg_definition).expect("test failed");
@@ -474,7 +516,7 @@ mod tests {
     #[test]
     fn stop_parsing_at_certain_arg() {
         let arg_list = [
-            "--long-u32=42".to_string(),
+            "--long-i32=42".to_string(),
             "--long-flag".to_string(),
             "-s".to_string(),
             "valid_string".to_string(),
@@ -484,12 +526,12 @@ mod tests {
         ];
         let arg_definition_list = [
             Arg::builder()
-                .id("long_u32")
-                .short_name('u')
-                .long_name("long-u32")
-                .kind(ArgKind::Value(ValueKind::UnsignedInt))
+                .id("long_i32")
+                .short_name('i')
+                .long_name("long-i32")
+                .kind(ArgKind::Value(ValueKind::Int))
                 .stop_parsing(false)
-                .default_value(ArgValue::UnsignedInt(666))
+                .default_value(ArgValue::Int(666))
                 .build(),
             Arg::builder()
                 .id("long_flag")
@@ -525,7 +567,7 @@ mod tests {
         let parsed_args =
             parse_and_validate_arg_list(&arg_list, &arg_definition_list).expect("test failed");
         let expected_args = vec![
-            ArgValuePair::new("long_u32", ArgValue::UnsignedInt(42)),
+            ArgValuePair::new("long_i32", ArgValue::Int(42)),
             ArgValuePair::new("long_flag", ArgValue::Bool(true)),
         ];
         assert_eq!(parsed_args, expected_args);

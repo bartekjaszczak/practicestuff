@@ -13,6 +13,30 @@ pub fn find_arg<'a>(arg_id: &str, arg_list: &'a [ArgValuePair]) -> Option<&'a Ar
     arg_list.iter().find(|elem| elem.id == arg_id)
 }
 
+impl SetFromArg for i32 {
+    fn set_value_from_arg_or_default(
+        arg_id: &str,
+        arg_list: &[ArgValuePair],
+        arg_definitions: &[Arg],
+    ) -> Self {
+        if let Some(arg) = find_arg(arg_id, arg_list) {
+            if let ArgValue::Int(val) = arg.value {
+                val
+            } else {
+                panic!("invalid type for option: '{arg_id}'");
+            }
+        } else if let Some(arg_definition) = arg_definitions.iter().find(|elem| elem.id() == arg_id) {
+            if let ArgValue::Int(val) = &arg_definition.default_value() {
+                *val
+            } else {
+                panic!("invalid type for default value of option: '{arg_id}'");
+            }
+        } else {
+            panic!("missing argument definition for option: '{arg_id}'");
+        }
+    }
+}
+
 impl SetFromArg for u32 {
     fn set_value_from_arg_or_default(
         arg_id: &str,
@@ -123,6 +147,25 @@ mod tests {
             .default_value(ArgValue::Bool(false))
             .build()];
         let val = bool::set_value_from_arg_or_default(arg_id, &arg_list, &arg_definitions);
+
+        assert_eq!(val, expected);
+    }
+
+    #[test]
+    fn i32_assign_value_from_arg_list() {
+        let expected = 42;
+        let arg_id = "some_arg";
+        let arg_list = [ArgValuePair::new(
+            "some_arg",
+            ArgValue::Int(expected),
+        )];
+        let arg_definitions = [Arg::builder()
+            .id(arg_id)
+            .short_name('s')
+            .kind(ArgKind::Value(ValueKind::Int))
+            .default_value(ArgValue::Int(0))
+            .build()];
+        let val = i32::set_value_from_arg_or_default(arg_id, &arg_list, &arg_definitions);
 
         assert_eq!(val, expected);
     }

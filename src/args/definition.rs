@@ -2,6 +2,7 @@ use super::ArgValue;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ValueKind {
+    Int,
     UnsignedInt,
     OneOfStr(Vec<String>),
 }
@@ -132,6 +133,13 @@ impl ArgDefinitionBuilder {
                 );
             }
             Some(ArgKind::Value(kind)) => match kind {
+                ValueKind::Int => {
+                    assert!(
+                        self.default_value.is_none()
+                            || matches!(self.default_value, Some(ArgValue::Int(_))),
+                        "default value must be of type i32"
+                    );
+                }
                 ValueKind::UnsignedInt => {
                     assert!(
                         self.default_value.is_none()
@@ -283,14 +291,23 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "default value must be of type i32")]
+    fn i32_arg_definition_requiresi_32_default_value() {
+        Arg::builder()
+            .id("some_arg")
+            .short_name('s')
+            .kind(ArgKind::Value(ValueKind::Int))
+            .default_value(ArgValue::Bool(false))
+            .build();
+    }
+
+    #[test]
     #[should_panic(expected = "default value must be of type String")]
     fn string_arg_definition_requires_string_default_value() {
         Arg::builder()
             .id("some_arg")
             .short_name('s')
-            .kind(ArgKind::Value(ValueKind::OneOfStr(
-                vec![],
-            )))
+            .kind(ArgKind::Value(ValueKind::OneOfStr(vec![])))
             .default_value(ArgValue::Bool(false))
             .build();
     }
@@ -336,8 +353,8 @@ mod tests {
                 .id("different_arg")
                 .short_name('a')
                 .long_name("another_name")
-                .kind(ArgKind::Value(ValueKind::UnsignedInt))
-                .default_value(ArgValue::UnsignedInt(42))
+                .kind(ArgKind::Value(ValueKind::Int))
+                .default_value(ArgValue::Int(42))
                 .build(),
         ];
 
