@@ -5,6 +5,7 @@ pub mod times_table;
 use std::fmt::Debug;
 
 use powers::Powers;
+use times_table::TimesTable;
 use super::question::Question;
 
 pub trait Base {
@@ -19,7 +20,7 @@ impl<T: Base + Debug + Sync + Send> Skill for T {}
 pub fn build(command: &str, args: &[String]) -> Result<Box<dyn Skill>, String> {
     match command {
         powers::CMD => Ok(Box::new(Powers::build(args)?)),
-        times_table::CMD => todo!(),
+        times_table::CMD => Ok(Box::new(TimesTable::build(args)?)),
         doomsday_algorithm::CMD => todo!(),
         _ => unreachable!("all commands should be added here"),
     }
@@ -40,6 +41,13 @@ mod tests {
     #[test]
     fn build_powers() {
         let command = powers::CMD;
+        let args = [];
+        build(command, &args).unwrap();
+    }
+
+    #[test]
+    fn build_times_table() {
+        let command = times_table::CMD;
         let args = [];
         build(command, &args).unwrap();
     }
