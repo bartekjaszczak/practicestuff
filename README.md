@@ -1,5 +1,7 @@
 # practicestuff
 
+![preview](preview.png)
+
 **practicestuff** is a CLI app designed to help you practise skills by asking questions and checking your answers. At the end, you'll see a number of correct answers, as well as some statistics. You can stop early by pressing `Ctrl+C`.
 
 The application should work on all platforms.
