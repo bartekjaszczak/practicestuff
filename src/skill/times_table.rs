@@ -71,7 +71,7 @@ impl TimesTable {
                 .short_name('l')
                 .long_name("lower-boundary")
                 .description(vec![
-                    "Set the minimum factor to use in questions (default: 1).".to_string(),
+                    "Set the minimum factor (default: 1).".to_string(),
                 ])
                 .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
@@ -82,7 +82,7 @@ impl TimesTable {
                 .short_name('u')
                 .long_name("upper-boundary")
                 .description(vec![
-                    "Set the maximum factor to use in questions (default: 10).".to_string(),
+                    "Set the maximum factor (default: 10).".to_string(),
                 ])
                 .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
@@ -115,7 +115,7 @@ impl TimesTable {
             .default_value()
             .to_string();
 
-        format!("Practise multiplication with a customisable factors' range. By default, the range of factors mimics the normal times table ({default_lower_boundary}-{default_upper_boundary}).")
+        format!("Practise multiplication with a customisable factors' range.\nBy default, the range of factors mimics the normal times table ({default_lower_boundary}-{default_upper_boundary}).")
     }
 
     fn build_err_message(msg: Option<String>) -> String {

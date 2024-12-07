@@ -204,8 +204,8 @@ impl GeneralOptions {
                 .short_name('n')
                 .long_name("number-of-questions")
                 .description(vec![
-                    "Specify the number of questions to ask (0 for infinite, default: 20)."
-                        .to_string(),
+                    "Specify the number of questions to ask".to_string(),
+                    "(0 for infinite, default: 20).".to_string(),
                 ])
                 .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
@@ -216,8 +216,8 @@ impl GeneralOptions {
                 .short_name('d')
                 .long_name("disable-live-statistics")
                 .description(vec![
-                    "Disable live statistics; statistics will not display between questions."
-                        .to_string(),
+                    "Disable live statistics; statistics will not".to_string(),
+                    "display between questions.".to_string(),
                 ])
                 .kind(ArgKind::Flag)
                 .stop_parsing(false)
@@ -228,20 +228,19 @@ impl GeneralOptions {
                 .short_name('b')
                 .long_name("behaviour-on-error")
                 .description(vec![
-                    "Define behaviour on incorrect answer (default: showcorrect):".to_string(),
+                    "Define behaviour on incorrect answer:".to_string(),
+                    "(default: showcorrect):".to_string(),
                     "  - continue: proceed to the next question.".to_string(),
-                    "  - showcorrect: proceed to the next question and display the correct answer."
-                        .to_string(),
-                    "  - repeat: ask the question again until the correct answer is provided."
-                        .to_string(),
+                    "  - showcorrect: proceed to the next" .to_string(),
+                    "    question and display the correct answer." .to_string(),
+                    "  - repeat: ask the question again until" .to_string(),
+                    "    the correct answer is provided." .to_string(),
                 ])
-                .kind(ArgKind::Value(ValueKind::OneOfStr(
-                    vec![
-                        BEHAVIOUR_ON_ERROR_CONTINUE.to_string(),
-                        BEHAVIOUR_ON_ERROR_SHOW_CORRECT.to_string(),
-                        BEHAVIOUR_ON_ERROR_REPEAT.to_string(),
-                    ],
-                )))
+                .kind(ArgKind::Value(ValueKind::OneOfStr(vec![
+                    BEHAVIOUR_ON_ERROR_CONTINUE.to_string(),
+                    BEHAVIOUR_ON_ERROR_SHOW_CORRECT.to_string(),
+                    BEHAVIOUR_ON_ERROR_REPEAT.to_string(),
+                ])))
                 .stop_parsing(false)
                 .default_value(ArgValue::Str("showcorrect".to_string()))
                 .build(),

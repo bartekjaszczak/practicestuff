@@ -99,18 +99,15 @@ impl Doomsday {
 
     fn additional_info() -> String {
         let mut text = String::new();
-        text.push_str("Practise doomsday algorithm ");
-        text.push_str("(https://en.wikipedia.org/wiki/Doomsday_rule). ");
-        text.push_str("By default, the dates range ± 100-140 years from now, ");
-        text.push_str("with a slight chance to go beyond that.");
-        text.push_str("Questions are presented in a form of YYYY-MM-DD, and answers ");
-        text.push_str("are expected in English ('Monday', 'Mon', 'Mo') or as numbers ");
-        text.push_str("(Monday - 1, Tuesday - 2, etc).");
-        text.push_str("\nNote: the algorithm works only for Gregorian calendar introduced during ");
-        text.push_str("Gregorian reform in 1582. Some countries did not adopt even until 2006, ");
-        text.push_str("so depending on where you live, weekdays of dates between 1582 ");
-        text.push_str("and 2006 might be off (see ");
-        text.push_str("https://en.wikipedia.org/wiki/Gregorian_calendar#Adoption_by_country).");
+        text.push_str("Practise doomsday algorithm (https://en.wikipedia.org/wiki/Doomsday_rule).\n");
+        text.push_str("By default, the dates range ± 100-140 years from now, with a slight chance\n");
+        text.push_str("to go beyond that. Questions are presented in a form of YYYY-MM-DD, while\n");
+        text.push_str("answers are expected in English ('Monday', 'Mon', 'Mo') or as numbers\n");
+        text.push_str("(Monday - 1, Tuesday - 2, etc).\n");
+        text.push_str("\nNote: the algorithm works only for Gregorian calendar introduced during\n");
+        text.push_str("Gregorian reform in 1582. Some countries did not adopt even until 2006, so\n");
+        text.push_str("depending on where you live, weekdays of dates between 1582 and 2006 might be\n");
+        text.push_str("off (see https://en.wikipedia.org/wiki/Gregorian_calendar#Adoption_by_country).");
 
         text
     }
@@ -131,7 +128,7 @@ impl Doomsday {
                 .short_name('l')
                 .long_name("lower-boundary")
                 .description(vec![
-                    "Set the minimum year to use in questions (default: 1880)".to_string(),
+                    "Set the minimum year (default: 1880)".to_string(),
                     "If default boundaries are used, the range is dynamic".to_string(),
                     "with a most of the questions from years 1880-2115".to_string(),
                     "and a small probability to go beyond these years.".to_string(),
@@ -145,7 +142,7 @@ impl Doomsday {
                 .short_name('u')
                 .long_name("upper-boundary")
                 .description(vec![
-                    "Set the maximum year to use in questions (default: 2115)".to_string(),
+                    "Set the maximum year (default: 2115)".to_string(),
                     "If default boundaries are used, the range is dynamic".to_string(),
                     "with most of the questions from years 1880-2115".to_string(),
                     "and a small probability to go beyond these years.".to_string(),

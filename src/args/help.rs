@@ -38,6 +38,10 @@ impl<'a> Options<'a> {
 /// * `additional_info`: Additional text displayed just under the usage text.
 /// * `options`: List of options to be displayed.
 /// * `commands`: List of commands to be displayed.
+///
+/// # Panics
+///
+/// Panics if maximum line length of final help text exceeds 80.
 pub fn build(
     usage: &str,
     additional_info: Option<&str>,
@@ -69,7 +73,16 @@ pub fn build(
         help.push_str(&build_commands(commands, first_column_width));
     }
 
+    assert!(
+        longest_line_length(&help) <= 80,
+        "help text cannot exceed 80 characters"
+    );
+
     help
+}
+
+fn longest_line_length(text: &str) -> usize {
+    text.lines().map(str::len).max().unwrap_or(0)
 }
 
 fn build_options(options: &[Arg], column_width: usize) -> String {
@@ -369,6 +382,54 @@ mod tests {
 
         assert!(result.contains(usage));
         assert!(result.contains(additional_info));
+    }
+
+    #[test]
+    #[should_panic(expected = "cannot exceed 80")]
+    fn help_too_wide() {
+        let usage = "Usage: some text";
+        let additional_info = "Some additional info";
+        let definitions = [Arg::builder()
+            .id("arg1")
+            .short_name('a')
+            .long_name("very-long-option-name")
+            .kind(ArgKind::Flag)
+            .default_value(ArgValue::Bool(false))
+            .description(vec![
+                "description that fits perfectly in 80 char limit".to_string()
+            ])
+            .build()];
+
+        // Line width: INDENT_WIDTH + SHORT_NAME_WIDTH + long name + GAP_WIDTH + description
+        //             2              4                  21 + 2      3           48          = 80
+
+        super::build(
+            usage,
+            Some(additional_info),
+            &Options::new("Options", &definitions),
+            &[],
+        );
+
+        let definitions = [Arg::builder()
+            .id("arg1")
+            .short_name('a')
+            .long_name("very-long-option-name")
+            .kind(ArgKind::Flag)
+            .default_value(ArgValue::Bool(false))
+            .description(vec![
+                "description that bareeeeely extends 80 char limit".to_string()
+            ])
+            .build()];
+
+        // Line width: INDENT_WIDTH + SHORT_NAME_WIDTH + long name + GAP_WIDTH + description
+        //             2              4                  21 + 2      3           49          = 81
+
+        super::build(
+            usage,
+            Some(additional_info),
+            &Options::new("Options", &definitions),
+            &[],
+        );
     }
 
     #[test]

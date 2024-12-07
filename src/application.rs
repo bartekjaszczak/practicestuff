@@ -67,7 +67,7 @@ impl Application {
 
     fn additional_info() -> String {
         format!(
-            "To display options and details for a specific command, run '{APP_NAME} <command> -h'."
+            "To display options and details for a specific command,\nrun '{APP_NAME} <command> -h'."
         )
     }
 

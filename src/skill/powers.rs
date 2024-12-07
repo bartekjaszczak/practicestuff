@@ -96,7 +96,7 @@ impl Powers {
             .default_value()
             .to_string();
 
-        format!("Practise powers with a customisable base and exponent range. By default, the base is {default_base}, with exponents ranging from {default_lower_boundary} to {default_upper_boundary}.")
+        format!("Practise powers with a customisable base and exponent range.\nBy default, the base is {default_base}, with exponents ranging from {default_lower_boundary} to {default_upper_boundary}.")
     }
 
     fn build_arg_definitions() -> Vec<Arg> {
@@ -124,7 +124,7 @@ impl Powers {
                 .short_name('l')
                 .long_name("lower-boundary")
                 .description(vec![
-                    "Set the minimum exponent to use in questions (default: 1).".to_string(),
+                    "Set the minimum exponent (default: 1).".to_string(),
                 ])
                 .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
@@ -135,7 +135,7 @@ impl Powers {
                 .short_name('u')
                 .long_name("upper-boundary")
                 .description(vec![
-                    "Set the maximum exponent to use in questions (default: 16).".to_string(),
+                    "Set the maximum exponent (default: 16).".to_string(),
                 ])
                 .kind(ArgKind::Value(ValueKind::UnsignedInt))
                 .stop_parsing(false)
