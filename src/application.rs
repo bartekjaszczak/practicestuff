@@ -3,9 +3,11 @@ use std::io::{self, Write};
 use std::process;
 use std::sync::Arc;
 
+use rand::Rng;
+
 use crate::args::prelude::*;
 use crate::config::{BehaviourOnError, Config, NumberOfQuestions};
-use crate::question::{Question, Generator};
+use crate::question::{Generator, Question};
 use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
 use crate::skill::times_table;
@@ -249,9 +251,9 @@ impl AppImpl {
     fn print_answer_feedback(&self, correct: bool, correct_answer: &str) {
         let mut feedback = String::new();
         if correct {
-            feedback.push_str("Correct!");
+            feedback.push_str(&Self::random_feedback_correct());
         } else {
-            feedback.push_str("Incorrect!");
+            feedback.push_str(&Self::random_feedback_incorrect());
             match self.config.options.behaviour_on_error {
                 BehaviourOnError::ShowCorrect => {
                     feedback.push_str(&format!(" Correct answer: {correct_answer}"));
@@ -261,6 +263,118 @@ impl AppImpl {
             }
         }
         println!("{feedback}");
+    }
+
+    fn random_feedback_correct() -> String {
+        let options = [
+            "Correct!",
+            "Correct",
+            "Good job.",
+            "Correct answer.",
+            "Ok.",
+            "Positive.",
+            "You got it!",
+            "Nice!",
+            "Great!",
+            "Awesome!",
+            "Well done!",
+            "Good work!",
+            "Nice work!",
+            "You're right!",
+            "You're correct!",
+            "You're doing great!",
+            "You're on fire!",
+            "You're on a roll!",
+            "You're on a streak!",
+            "Definitely!",
+            "Absolutely!",
+            "Absolutely correct!",
+            "Yes.",
+            "Yes!",
+            "That's right.",
+            "That's correct.",
+            "That's it!",
+            "That's the one!",
+            "That's the answer!",
+            "How'd you know that?",
+            "How'd you know?",
+            "How'd you get that?",
+            "Affirmative.",
+            "Affirmative!",
+            "Very good.",
+            "Good.",
+            "Good!",
+            "Good answer.",
+            "Great answer.",
+            "Great job!",
+            "Great work!",
+            "Yup.",
+            "Yup!",
+            "Yup, that's it.",
+            "Correctamundo!",
+            "Yeah!",
+            "Yeah.",
+            "Yeah, that's it.",
+            "Yeah, that's right.",
+            "Yeah, that's correct.",
+        ];
+        options[rand::thread_rng().gen_range(0..options.len())].to_string()
+    }
+
+    fn random_feedback_incorrect() -> String {
+        let options = [
+            "Incorrect!",
+            "Incorrect.",
+            "Incorrect answer.",
+            "Wrong answer.",
+            "Wrong.",
+            "Nope.",
+            "Negative.",
+            "Maybe next time!",
+            "Not quite.",
+            "No.",
+            "...What?",
+            "Are you even trying?",
+            "Almost...",
+            "Not quite.",
+            "Not quite there...",
+            "Not quite right.",
+            "Not quite correct.",
+            "Definitely not that.",
+            "Definitely not...",
+            "Absolutely not.",
+            "Absolutely not!",
+            "Wroooong.",
+            "You're not very good at this, are you?",
+            "You're not very good at this.",
+            "Need more practice!",
+            "My grandma could do better.",
+            "Nooooope",
+            "Nope!",
+            "That's not it.",
+            "That's not the answer.",
+            "That's not the one.",
+            "Not the brightest bulb, are you?",
+            "Not the sharpest tool in the shed, are you?",
+            "Way off.",
+            "Way off!",
+            "Way off the mark.",
+            "Waaaaay off.",
+            "Nah.",
+            "Nah mate.",
+            "Very much no.",
+            "That's absurd.",
+            "That's ridiculous.",
+            "Preposterous.",
+            "Well, that's just silly.",
+            "Well...",
+            "Well, that's not right.",
+            "Well, no.",
+            "Well, nope.",
+            "Well, that's not it.",
+            "No, that's not it.",
+        ];
+        options[rand::thread_rng().gen_range(0..options.len())].to_string()
     }
 
     fn get_skill(&self) -> &dyn Skill {

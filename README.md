@@ -4,7 +4,6 @@ This is a work in progress. Basic functionality has already been implemented, bu
 
 - coloured output with --colour option to control it
 - time rush mode (as many correct answers in given time)
-- various feedback options (to replace boring "Correct" and "Incorrect" messages)
 
 # practicestuff
 
