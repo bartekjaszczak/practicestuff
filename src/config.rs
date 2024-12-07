@@ -14,6 +14,7 @@ const ARG_ID_VERSION: &str = "version";
 const ARG_ID_NUMBER_OF_QUESTIONS: &str = "num_of_questions";
 const ARG_ID_DISABLE_LIVE_STATISTICS: &str = "disable_live_stats";
 const ARG_ID_BEHAVIOUR_ON_ERROR: &str = "behaviour_on_err";
+const ARG_ID_NO_COLOUR: &str = "no_colour";
 
 const BEHAVIOUR_ON_ERROR_CONTINUE: &str = "continue";
 const BEHAVIOUR_ON_ERROR_SHOW_CORRECT: &str = "showcorrect";
@@ -127,15 +128,19 @@ impl BehaviourOnError {
     }
 }
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone)]
 pub struct GeneralOptions {
     pub arg_definitions: Vec<Arg>,
+
     pub show_help: bool,
     pub show_version: bool,
 
     pub number_of_questions: NumberOfQuestions,
     pub disable_live_statistics: bool,
     pub behaviour_on_error: BehaviourOnError,
+
+    pub use_colour: bool,
 }
 
 impl GeneralOptions {
@@ -169,6 +174,9 @@ impl GeneralOptions {
         );
         let behaviour_on_error = BehaviourOnError::from_string(&behaviour_on_error);
 
+        let use_colour =
+            !bool::set_value_from_arg_or_default(ARG_ID_NO_COLOUR, &parsed_args, &arg_definitions);
+
         Ok(Self {
             arg_definitions,
             show_help,
@@ -176,6 +184,7 @@ impl GeneralOptions {
             number_of_questions,
             disable_live_statistics,
             behaviour_on_error,
+            use_colour
         })
     }
 
@@ -243,6 +252,14 @@ impl GeneralOptions {
                 ])))
                 .stop_parsing(false)
                 .default_value(ArgValue::Str("showcorrect".to_string()))
+                .build(),
+            Arg::builder()
+                .id(ARG_ID_NO_COLOUR)
+                .long_name("no-color")
+                .description(vec!["Disable coloured output.".to_string()])
+                .kind(ArgKind::Flag)
+                .stop_parsing(false)
+                .default_value(ArgValue::Bool(false))
                 .build(),
         ]
     }
@@ -317,6 +334,7 @@ mod tests {
             BehaviourOnError::ShowCorrect
         );
         assert!(config.skill.is_some());
+        assert!(config.options.use_colour);
     }
 
     #[test]
@@ -326,6 +344,7 @@ mod tests {
             "--number-of-questions=10".to_string(),
             "--disable-live-statistics".to_string(),
             "--behavior-on-error=repeat".to_string(),
+            "--no-color".to_string(),
             "powers".to_string(),
         ];
         let config = Config::build(&args).expect("should build successfully");
@@ -338,12 +357,14 @@ mod tests {
         assert!(config.options.disable_live_statistics);
         assert_eq!(config.options.behaviour_on_error, BehaviourOnError::Repeat);
         assert!(config.skill.is_some());
+        assert!(!config.options.use_colour);
 
         // Different set of args
         let args = [
             "command".to_string(),
             "-n".to_string(),
             "0".to_string(),
+            "--no-color".to_string(),
             "-d".to_string(),
             "-b".to_string(),
             "continue".to_string(),
@@ -362,6 +383,7 @@ mod tests {
             BehaviourOnError::NextQuestion
         );
         assert!(config.skill.is_some());
+        assert!(!config.options.use_colour);
     }
 
     #[test]
