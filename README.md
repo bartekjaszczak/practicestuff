@@ -1,10 +1,3 @@
-# WIP
-
-This is a work in progress. Basic functionality has already been implemented, but there are a few things I'm planning to do:
-
-- coloured output with --colour option to control it
-- time rush mode (as many correct answers in given time)
-
 # practicestuff
 
 **practicestuff** is a CLI app designed to help you practise skills by asking questions and checking your answers. At the end, you'll see a number of correct answers, as well as some statistics. You can stop early by pressing `Ctrl+C`.
