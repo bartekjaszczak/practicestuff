@@ -3,9 +3,11 @@ use std::io::{self, Write};
 use std::process;
 use std::sync::Arc;
 
+use crossterm::style::Color;
 use rand::Rng;
 
 use crate::args::prelude::*;
+use crate::colour;
 use crate::config::{BehaviourOnError, Config, NumberOfQuestions};
 use crate::question::{Generator, Question};
 use crate::skill::doomsday_algorithm;
@@ -142,8 +144,15 @@ impl AppImpl {
     }
 
     fn handle_question(&self, question: &Question) {
-        println!("\nQ: {}", question.prompt());
-        print!("A: ");
+        println!(
+            "\n{}{}",
+            colour::format_text("Q: ", self.use_colour(), Color::DarkYellow),
+            question.prompt()
+        );
+        print!(
+            "{}",
+            colour::format_text("A: ", self.use_colour(), Color::DarkYellow)
+        );
         io::stdout().flush().expect("IO operation failed (flush)");
 
         self.stats.start_new_question();
@@ -190,25 +199,38 @@ impl AppImpl {
             }
         };
 
-        println!("{number_of_questions}. Use Ctrl+C to exit.");
+        let number_of_questions =
+            colour::format_text(number_of_questions, self.use_colour(), Color::DarkYellow);
+        let ctrl_c = colour::format_text("Ctrl+C", self.use_colour(), Color::Yellow);
+
+        println!("{number_of_questions}. Use {ctrl_c} to exit.");
     }
 
     fn print_stats_in_between(&self) {
-        match self.number_of_questions() {
-            NumberOfQuestions::Infinite => println!(
-                "Time taken: {}, current accuracy: {} ({})",
-                self.stats.get_last_question_time(),
-                self.stats.get_current_accuracy(),
-                self.stats.get_number_of_correct_answers(),
+        let text = match self.number_of_questions() {
+            NumberOfQuestions::Infinite => colour::format_text(
+                &format!(
+                    "Time taken: {}, current accuracy: {} ({})",
+                    self.stats.get_last_question_time(),
+                    self.stats.get_current_accuracy(),
+                    self.stats.get_number_of_correct_answers()
+                ),
+                self.use_colour(),
+                Color::Grey,
             ),
-            NumberOfQuestions::Limited(_) => println!(
-                "Time taken: {}, current accuracy: {} ({}), questions left: {}",
-                self.stats.get_last_question_time(),
-                self.stats.get_current_accuracy(),
-                self.stats.get_number_of_correct_answers(),
-                self.stats.get_number_of_remaining_questions(),
+            NumberOfQuestions::Limited(_) => colour::format_text(
+                &format!(
+                    "Time taken: {}, current accuracy: {} ({}), questions left: {}",
+                    self.stats.get_last_question_time(),
+                    self.stats.get_current_accuracy(),
+                    self.stats.get_number_of_correct_answers(),
+                    self.stats.get_number_of_remaining_questions(),
+                ),
+                self.use_colour(),
+                Color::Grey,
             ),
-        }
+        };
+        println!("{text}");
     }
 
     fn print_stats_post_game(&self) {
@@ -251,9 +273,17 @@ impl AppImpl {
     fn print_answer_feedback(&self, correct: bool, correct_answer: &str) {
         let mut feedback = String::new();
         if correct {
-            feedback.push_str(&Self::random_feedback_correct());
+            feedback.push_str(&colour::format_text(
+                &Self::random_feedback_correct(),
+                self.use_colour(),
+                Color::Green,
+            ));
         } else {
-            feedback.push_str(&Self::random_feedback_incorrect());
+            feedback.push_str(&colour::format_text(
+                &Self::random_feedback_incorrect(),
+                self.use_colour(),
+                Color::Red,
+            ));
             match self.config.options.behaviour_on_error {
                 BehaviourOnError::ShowCorrect => {
                     feedback.push_str(&format!(" Correct answer: {correct_answer}"));
@@ -387,5 +417,9 @@ impl AppImpl {
 
     fn number_of_questions(&self) -> NumberOfQuestions {
         self.config.options.number_of_questions
+    }
+
+    fn use_colour(&self) -> bool {
+        self.config.options.use_colour
     }
 }

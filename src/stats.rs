@@ -231,8 +231,8 @@ impl Stats {
         let mut time = String::new();
         if hours > 0 {
             time.push_str(&format!("{hours}h "));
-        }
-        if minutes > 0 {
+            time.push_str(&format!("{minutes}m "));
+        } else if minutes > 0 {
             time.push_str(&format!("{minutes}m "));
         }
         time.push_str(&format!("{seconds}.{milliseconds}s"));
@@ -241,7 +241,7 @@ impl Stats {
     }
 
     fn truncate_trailing_zeros(number: u32) -> String {
-        let mut number = number.to_string();
+        let mut number = format!("{number:0>3}");
         while number.ends_with('0') && number.len() > 1 {
             number.pop();
         }
@@ -486,5 +486,52 @@ mod tests {
         assert_ne!(max_time, "0.0s", "Should be **more or less** 0.4s");
         assert_ne!(min_time, "0.0s", "Should be **more or less** 0.05s");
         assert_ne!(avg_time, "0.0s", "Should be **more or less** 0.225s");
+    }
+
+    #[test]
+    fn duration_format() {
+        assert_eq!(Stats::format_duration(&Duration::from_millis(0)), "0.0s");
+        assert_eq!(Stats::format_duration(&Duration::from_millis(1)), "0.001s");
+        assert_eq!(Stats::format_duration(&Duration::from_millis(10)), "0.01s");
+        assert_eq!(Stats::format_duration(&Duration::from_millis(11)), "0.011s");
+        assert_eq!(Stats::format_duration(&Duration::from_millis(100)), "0.1s");
+        assert_eq!(
+            Stats::format_duration(&Duration::from_millis(101)),
+            "0.101s"
+        );
+        assert_eq!(Stats::format_duration(&Duration::from_millis(110)), "0.11s");
+        assert_eq!(
+            Stats::format_duration(&Duration::from_millis(111)),
+            "0.111s"
+        );
+        assert_eq!(Stats::format_duration(&Duration::from_millis(1000)), "1.0s");
+        assert_eq!(
+            Stats::format_duration(&Duration::from_millis(1001)),
+            "1.001s"
+        );
+        assert_eq!(
+            Stats::format_duration(&Duration::from_millis(10 * 1000)),
+            "10.0s"
+        );
+        assert_eq!(
+            Stats::format_duration(&Duration::from_millis(60 * 1000)),
+            "1m 0.0s"
+        );
+        assert_eq!(
+            Stats::format_duration(&Duration::from_millis(10 * 60 * 1000)),
+            "10m 0.0s"
+        );
+        assert_eq!(
+            Stats::format_duration(&Duration::from_millis(60 * 60 * 1000)),
+            "1h 0m 0.0s"
+        );
+        assert_eq!(
+            Stats::format_duration(&Duration::from_millis(168 * 60 * 60 * 1000)),
+            "168h 0m 0.0s"
+        );
+        assert_eq!(
+            Stats::format_duration(&Duration::from_millis(3 * 60 * 60 * 1000 + 5 * 60 * 1000 + 7 * 1000 + 93)),
+            "3h 5m 7.093s"
+        );
     }
 }

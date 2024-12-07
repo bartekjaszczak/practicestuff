@@ -1,5 +1,6 @@
 mod application;
 mod args;
+mod colour;
 mod config;
 mod question;
 mod skill;
