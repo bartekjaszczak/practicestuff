@@ -15,35 +15,6 @@ const ARG_ID_LOWER_BOUNDARY: &str = "lower_boundary";
 const ARG_ID_UPPER_BOUNDARY: &str = "upper_boundary";
 
 const GREGORIAN_CALENDAR_INTRODUCTION: i32 = 1582;
-const GREGORIAN_CALENDAR_ADOPTION: i32 = 1752; // Boundary date for most countries
-const GREGORIAN_CALENDAR_LATE_ADOPTION: i32 = 1926; // Boundary date for some Asian countries,
-                                                    // Greece, Turkey and a few others
-const GREGORIAN_CALENDAR_VERY_LATE_ADOPTION: i32 = 2016; // Saudi Arabia
-
-#[derive(Debug)]
-enum GregorianCalendarAdoption {
-    NotAdopted,
-    Introduced,
-    Adopted,
-    LateAdopted,
-    VeryLateAdopted,
-}
-
-impl GregorianCalendarAdoption {
-    fn from(year: i32) -> Self {
-        const INTRODUCTION: i32 = GREGORIAN_CALENDAR_INTRODUCTION + 1;
-        const ADOPTION: i32 = GREGORIAN_CALENDAR_ADOPTION + 1;
-        const LATE_ADOPTION: i32 = GREGORIAN_CALENDAR_LATE_ADOPTION + 1;
-        const VERY_LATE_ADOPTION: i32 = GREGORIAN_CALENDAR_VERY_LATE_ADOPTION + 1;
-        match year {
-            ..INTRODUCTION => GregorianCalendarAdoption::NotAdopted,
-            INTRODUCTION..ADOPTION => GregorianCalendarAdoption::Introduced,
-            ADOPTION..LATE_ADOPTION => GregorianCalendarAdoption::Adopted,
-            LATE_ADOPTION..VERY_LATE_ADOPTION => GregorianCalendarAdoption::LateAdopted,
-            VERY_LATE_ADOPTION.. => GregorianCalendarAdoption::VeryLateAdopted,
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct Doomsday {
@@ -53,7 +24,6 @@ pub struct Doomsday {
     lower_boundary: i32,
     upper_boundary: i32,
 
-    calendar_adoption: GregorianCalendarAdoption,
     default_boundaries: bool,
 }
 
@@ -98,20 +68,23 @@ impl Doomsday {
         let default_boundaries = lower_boundary.to_string() == default_lower_boundary
             && upper_boundary.to_string() == default_upper_boundary;
 
+        if lower_boundary <= GREGORIAN_CALENDAR_INTRODUCTION {
+            return Err(Self::build_err_message(Some(
+                format!("year boundary too low; Doomsday algorithm does not work for dates on {GREGORIAN_CALENDAR_INTRODUCTION} and before")
+            )));
+        }
+
         if NaiveDate::from_ymd_opt(upper_boundary, 12, 31).is_none() {
             return Err(Self::build_err_message(Some(
                 "year boundaries cannot exceed 262143".to_string(), // Limitation of NaiveDate
             )));
         }
 
-        let calendar_adoption = GregorianCalendarAdoption::from(lower_boundary);
-
         Ok(Self {
             arg_definitions,
             show_help,
             lower_boundary,
             upper_boundary,
-            calendar_adoption,
             default_boundaries,
         })
     }
@@ -124,30 +97,22 @@ impl Doomsday {
         format!("Try '{APP_NAME} doomsday --help' for more information.")
     }
 
-    fn additional_info(&self) -> String {
+    fn additional_info() -> String {
         let mut text = String::new();
-        text.push_str(
-            "Practise doomsday algorithm (https://en.wikipedia.org/wiki/Doomsday_rule). ",
-        );
-        text.push_str("By default, the dates range ± 100-140 years from now, with a slight chance to go beyond that.");
-        text.push_str("\nNote: the algorithm works only for Gregorian calendar dates.");
-
-        if let Some(warning) = self.generate_warning() {
-            text.push('\n');
-            text.push_str(&warning);
-        }
+        text.push_str("Practise doomsday algorithm ");
+        text.push_str("(https://en.wikipedia.org/wiki/Doomsday_rule). ");
+        text.push_str("By default, the dates range ± 100-140 years from now, ");
+        text.push_str("with a slight chance to go beyond that.");
+        text.push_str("Questions are presented in a form of YYYY-MM-DD, and answers ");
+        text.push_str("are expected in English ('Monday', 'Mon', 'Mo') or as numbers ");
+        text.push_str("(Monday - 1, Tuesday - 2, etc).");
+        text.push_str("\nNote: the algorithm works only for Gregorian calendar introduced during ");
+        text.push_str("Gregorian reform in 1582. Some countries did not adopt even until 2006, ");
+        text.push_str("so depending on where you live, weekdays of dates between 1582 ");
+        text.push_str("and 2006 might be off (see ");
+        text.push_str("https://en.wikipedia.org/wiki/Gregorian_calendar#Adoption_by_country).");
 
         text
-    }
-
-    fn generate_warning(&self) -> Option<String> {
-        match self.calendar_adoption {
-            GregorianCalendarAdoption::Introduced => Some(format!("The Gregorian calendar was introduced in {GREGORIAN_CALENDAR_INTRODUCTION}, but a lot of countries (Including Great Britain and Nordic countries) did not switch until {GREGORIAN_CALENDAR_ADOPTION}. For those countries weekdays between {GREGORIAN_CALENDAR_INTRODUCTION} and {GREGORIAN_CALENDAR_ADOPTION} might be off!")),
-            GregorianCalendarAdoption::Adopted => Some(format!("Even though the Gregorian calendar was introduced in {GREGORIAN_CALENDAR_INTRODUCTION}, some Asian and European countries did not switch until {GREGORIAN_CALENDAR_LATE_ADOPTION}. For those countries weekdays between {GREGORIAN_CALENDAR_INTRODUCTION} and {GREGORIAN_CALENDAR_LATE_ADOPTION} might be off!")),
-            GregorianCalendarAdoption::LateAdopted => Some(format!("The Saudi Arabia did not switch to Gregorian calendar until {GREGORIAN_CALENDAR_VERY_LATE_ADOPTION}. For Saudi Arabia weekdays between {GREGORIAN_CALENDAR_INTRODUCTION} and {GREGORIAN_CALENDAR_VERY_LATE_ADOPTION} might be off!")),
-            _ => None, // Years before Gregorian reform are checked in build(),
-                       // years after Saudi Arabia adopted Gregorian calendar are valid
-        }
     }
 
     fn build_arg_definitions() -> Vec<Arg> {
@@ -227,7 +192,7 @@ impl Doomsday {
     fn calculate_year_range(&self) -> (i32, i32) {
         let mut rng = rand::thread_rng();
         if self.default_boundaries && rng.gen_range(0..100) < 8 {
-            (GREGORIAN_CALENDAR_ADOPTION + 1, 2617) // Arbitrary ± 400 year range
+            (1753, 2617) // Arbitrary, from Gregorian calendar adoption to ~400 years into the future
         } else {
             (self.lower_boundary, self.upper_boundary)
         }
@@ -248,7 +213,7 @@ impl Base for Doomsday {
     fn get_help_text(&self) -> String {
         let definitions = &self.arg_definitions;
         let options = help::Options::new("Powers options", definitions);
-        help::build(&Self::usage(), Some(&self.additional_info()), &options, &[])
+        help::build(&Self::usage(), Some(&Self::additional_info()), &options, &[])
     }
 }
 
@@ -257,31 +222,36 @@ impl Question {
         let (answer, alternative_answers) = match date.weekday() {
             Weekday::Mon => (
                 "monday".to_string(),
-                ["mo".to_string(), "mon".to_string(), 1.to_string()],
+                vec!["mo".to_string(), "mon".to_string(), 1.to_string()],
             ),
             Weekday::Tue => (
                 "tuesday".to_string(),
-                ["tu".to_string(), "tue".to_string(), 2.to_string()],
+                vec!["tu".to_string(), "tue".to_string(), 2.to_string()],
             ),
             Weekday::Wed => (
                 "wednesday".to_string(),
-                ["we".to_string(), "wed".to_string(), 3.to_string()],
+                vec!["we".to_string(), "wed".to_string(), 3.to_string()],
             ),
             Weekday::Thu => (
                 "thursday".to_string(),
-                ["th".to_string(), "thu".to_string(), 4.to_string()],
+                vec!["th".to_string(), "thu".to_string(), 4.to_string()],
             ),
             Weekday::Fri => (
                 "friday".to_string(),
-                ["fr".to_string(), "fri".to_string(), 5.to_string()],
+                vec!["fr".to_string(), "fri".to_string(), 5.to_string()],
             ),
             Weekday::Sat => (
                 "saturday".to_string(),
-                ["sa".to_string(), "sat".to_string(), 6.to_string()],
+                vec!["sa".to_string(), "sat".to_string(), 6.to_string()],
             ),
             Weekday::Sun => (
                 "sunday".to_string(),
-                ["su".to_string(), "sun".to_string(), 7.to_string()],
+                vec![
+                    "su".to_string(),
+                    "sun".to_string(),
+                    0.to_string(),
+                    7.to_string(),
+                ],
             ),
         };
         Question::builder()
