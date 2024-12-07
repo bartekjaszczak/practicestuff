@@ -61,7 +61,7 @@ impl TimesTable {
                 .id(ARG_ID_HELP)
                 .short_name('h')
                 .long_name("help")
-                .description(vec!["Display help for times table command.".to_string()])
+                .description(vec!["Display help for times_table command.".to_string()])
                 .kind(ArgKind::Flag)
                 .stop_parsing(true)
                 .default_value(ArgValue::Bool(false))
