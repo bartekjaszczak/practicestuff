@@ -1,5 +1,4 @@
 use std::iter;
-use std::ops::Mul;
 
 use rand::Rng;
 
@@ -45,13 +44,6 @@ impl TimesTable {
         if lower_boundary > upper_boundary {
             return Err(Self::build_err_message(Some(
                 "lower boundary must be less than or equal to upper boundary".to_string(),
-            )));
-        }
-        let (_, overflow) = u64::from(lower_boundary).overflowing_mul(u64::from(upper_boundary));
-        if overflow {
-            let max_factor = Self::calculate_max_factor(lower_boundary, upper_boundary);
-            return Err(Self::build_err_message(Some(
-                        format!("{lower_boundary}*{upper_boundary} exceeds maximum allowed value. Maximum factor that works with {lower_boundary} is {max_factor}")
             )));
         }
 
@@ -100,11 +92,11 @@ impl TimesTable {
     }
 
     fn usage() -> String {
-        format!("Usage: {APP_NAME} [option]... timestable [timestable_option]...")
+        format!("Usage: {APP_NAME} [option]... times_table [timestable_option]...")
     }
 
     fn help_prompt() -> String {
-        format!("Try '{APP_NAME}' timestable --help for more information.")
+        format!("Try '{APP_NAME}' times_table --help for more information.")
     }
 
     fn additional_info(&self) -> String {
@@ -145,29 +137,12 @@ impl TimesTable {
         let mut rng = rand::thread_rng();
         let first = rng.gen_range(self.lower_boundary..=self.upper_boundary);
         let second = rng.gen_range(self.lower_boundary..=self.upper_boundary);
-        let result = u64::from(first).mul(u64::from(second));
+        let result = u64::from(first) * u64::from(second); // u32::MAX ^ 2 < u64::MAX
 
         Question::builder()
             .question(&format!("{first}*{second}"))
             .answer(&result.to_string())
             .build()
-    }
-
-    fn calculate_max_factor(lower_factor: u32, chosen_factor: u32) -> u32 {
-        let mut low = 0;
-        let mut high = chosen_factor;
-        let mut max_factor = 0;
-        while low <= high {
-            let mid = low + (high - low) / 2;
-            let (_, overflow) = u64::from(lower_factor).overflowing_mul(u64::from(mid));
-            if overflow {
-                high = mid - 1;
-            } else {
-                max_factor = mid;
-                low = mid + 1;
-            }
-        }
-        max_factor
     }
 }
 
@@ -186,5 +161,137 @@ impl Base for TimesTable {
         let definitions = &self.arg_definitions;
         let options = help::Options::new("Times table options", definitions);
         help::build(&Self::usage(), Some(&self.additional_info()), &options, &[])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn build_times_table_defaults() {
+        let args = [];
+        let times_table = TimesTable::build(&args).expect("Should build correctly with no args");
+        assert!(!times_table.show_help);
+        assert_eq!(times_table.lower_boundary, 1);
+        assert_eq!(times_table.upper_boundary, 10);
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid option argument")]
+    fn build_times_table_incorrect_args() {
+        let args = ["-l".to_string(), "hehe".to_string(), "-what".to_string()];
+        TimesTable::build(&args).unwrap();
+    }
+
+    #[test]
+    fn build_times_table_with_args() {
+        let args = [
+            "--lower-boundary=4".to_string(),
+            "-u".to_string(),
+            "7".to_string(),
+        ];
+        let times_table = TimesTable::build(&args).expect("Should build correctly with args");
+        assert!(!times_table.show_help);
+        assert_eq!(times_table.lower_boundary, 4);
+        assert_eq!(times_table.upper_boundary, 7);
+    }
+
+    #[test]
+    #[should_panic(expected = "lower boundary must be less than or equal to upper boundary")]
+    fn build_times_table_mismatched_boundaries() {
+        let args = [
+            "-l".to_string(),
+            "5".to_string(),
+            "-u".to_string(),
+            "4".to_string(),
+        ];
+        TimesTable::build(&args).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid option argument")]
+    fn build_times_table_overflow() {
+        let args = [
+            "-l".to_string(),
+            "4294967296".to_string(),
+            "-u".to_string(),
+            "4294967296".to_string(),
+        ]; // factors are u32 and the result is u64
+           // parser won't accept u32::MAX + 1 and larger
+           // no risk of overflowing
+        TimesTable::build(&args).unwrap();
+    }
+
+    #[test]
+    fn error_message() {
+        let err = Some("something extraordinarily wrong happened".to_string());
+        let message = TimesTable::build_err_message(err);
+        assert!(message.contains(APP_NAME));
+        assert!(message.contains(CMD));
+        assert!(message.contains("something extraordinarily wrong happened"));
+        assert!(message.contains("Usage"));
+        assert!(message.contains("for more information"));
+
+        let err = None;
+        let message = TimesTable::build_err_message(err);
+        assert!(message.contains(APP_NAME));
+        assert!(message.contains(CMD));
+        assert!(message.contains("Usage"));
+        assert!(message.contains("for more information"));
+    }
+
+    #[test]
+    fn question_generation() {
+        let args = ["-u".to_string(), "1".to_string()];
+        let times_table = TimesTable::build(&args).expect("Should build correctly");
+        let question = times_table.generate_question();
+        assert_eq!(question.prompt(), "1*1");
+        assert_eq!(question.correct_answer(), "1");
+        assert!(question.is_answer_correct("1"));
+    }
+
+    #[test]
+    fn multiple_question_generation() {
+        let args = [
+            "--lower-boundary=3".to_string(),
+            "--upper-boundary=3".to_string(),
+        ];
+        let times_table = TimesTable::build(&args).expect("Should build correctly");
+        let questions = times_table.generate_questions(10);
+        assert_eq!(questions.len(), 10);
+        assert!(questions
+            .iter()
+            .all(|question| question.prompt().contains("3*3")));
+    }
+
+    #[test]
+    fn print_help_only() {
+        let args = [];
+        let times_table = TimesTable::build(&args).expect("Should build correctly");
+        assert!(!times_table.wants_to_print_help());
+
+        let args = [
+            "-l".to_string(),
+            "4".to_string(),
+            "-h".to_string(),
+            "--upper-boundary=10".to_string(),
+        ];
+        let times_table = TimesTable::build(&args).expect("Should build correctly");
+        assert!(times_table.wants_to_print_help());
+    }
+
+    #[test]
+    fn help_text() {
+        let args = ["-h".to_string()];
+        let times_table = TimesTable::build(&args).expect("Should build correctly");
+        let help_text = times_table.get_help_text();
+        assert!(help_text.contains("Times table options"));
+        assert!(help_text.contains("Usage"));
+
+        // Ensure all flags are included
+        assert!(help_text.contains("-h, --help"));
+        assert!(help_text.contains("-l, --lower-boundary"));
+        assert!(help_text.contains("-u, --upper-boundary"));
     }
 }
