@@ -4,14 +4,14 @@ This is a work in progress and not all functionalities may function correctly (o
 
 # practicestuff
 
-**practicestuff** is a CLI app designed to help you practice skills by asking questions and checking your answers. At the end, you'll see a number of correct answers, as well as some statistics. You can stop early by pressing `Ctrl+C`.
+**practicestuff** is a CLI app designed to help you practise skills by asking questions and checking your answers. At the end, you'll see a number of correct answers, as well as some statistics. You can stop early by pressing `Ctrl+C`.
 
 The application should work on all platforms.
 
 List of skills:
 
 - powers of a number
-- multiplication table (times table) (not yet implemented)
+- multiplication table (times table)
 - doomsday algorithm (not yet implemented)
 
 ## Configuration options
@@ -26,10 +26,14 @@ The application is somewhat configurable. Following options are available:
 
 ### Powers
 
-Allows to practice powers. Configurable parameters include:
+Allows to practise powers. Configurable parameters include:
 
 - base (default: 2)
 - exponent range (default: 1-16)
+
+### Times table
+
+Allows to practise multiplications. Factors' range is configurable (default: 1-10 (regular times table)).
 
 # Development
 
@@ -57,12 +61,6 @@ Allows to practice powers. Configurable parameters include:
 - question generation w/ options
 - tests
 
-### Multiplication table
-
-- help & usage prompts
-- question generation w/ options
-- tests
-
 ### Improvements
 
 - coloured output (termcolor?) with --no-color option
@@ -72,6 +70,6 @@ Allows to practice powers. Configurable parameters include:
 
 ## What's next & bug reports
 
-The application in its current state suits my needs, but I'm open for proposals, either for new skills to practice or more configurability. If you feel that the app lacks something, feel free to open an issue or a PR! I'd be more than happy.
+The application in its current state suits my needs, but I'm open for proposals, either for new skills to practise or more configurability. If you feel that the app lacks something, feel free to open an issue or a PR! I'd be more than happy.
 
 As for the bugs, there are some for sure. If you see one, report it!

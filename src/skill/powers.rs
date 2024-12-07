@@ -96,7 +96,7 @@ impl Powers {
             .default_value()
             .to_string();
 
-        format!("Practice powers with a customizable base and exponent range. By default, the base is {default_base}, with exponents ranging from {default_lower_boundary} to {default_upper_boundary}.")
+        format!("Practise powers with a customisable base and exponent range. By default, the base is {default_base}, with exponents ranging from {default_lower_boundary} to {default_upper_boundary}.")
     }
 
     fn build_arg_definitions() -> Vec<Arg> {

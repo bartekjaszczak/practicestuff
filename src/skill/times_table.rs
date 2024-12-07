@@ -92,7 +92,7 @@ impl TimesTable {
     }
 
     fn usage() -> String {
-        format!("Usage: {APP_NAME} [option]... times_table [timestable_option]...")
+        format!("Usage: {APP_NAME} [option]... times_table [times_table_option]...")
     }
 
     fn help_prompt() -> String {
@@ -115,7 +115,7 @@ impl TimesTable {
             .default_value()
             .to_string();
 
-        format!("Practice multiplication table with a customisable factor range. By default, the factor range mimics the normal times table ({default_lower_boundary}-{default_upper_boundary}).")
+        format!("Practise multiplication with a customisable factors' range. By default, the range of factors mimics the normal times table ({default_lower_boundary}-{default_upper_boundary}).")
     }
 
     fn build_err_message(msg: Option<String>) -> String {
