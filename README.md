@@ -68,6 +68,7 @@ Allows to practice powers. Configurable parameters include:
 - coloured output (termcolor?) with --no-color option
 - additional mode (as many answers in given time)
 - multiple texts for "correct" and "incorrect" answers
+- gitlab & github CI
 
 ## What's next & bug reports
 

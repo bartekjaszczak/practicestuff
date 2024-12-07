@@ -34,6 +34,14 @@ pub struct Config {
 impl Config {
     /// Builds a config from a list of `args`.
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// use practicestuff::Config;
+    ///
+    /// let args = ["cmd".to_string(), "-h".to_string()];
+    /// let config = Config::build(&args).unwrap();
+    /// ```
     /// # Errors
     ///
     /// This function will return an error if any part of parsing goes wrong.
