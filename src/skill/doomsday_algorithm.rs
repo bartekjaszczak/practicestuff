@@ -101,7 +101,7 @@ impl Doomsday {
                 .id(ARG_ID_HELP)
                 .short_name('h')
                 .long_name("help")
-                .description(vec!["Display help for powers command.".to_string()])
+                .description(vec!["Display help for doomsday command.".to_string()])
                 .kind(ArgKind::Flag)
                 .stop_parsing(true)
                 .default_value(ArgValue::Bool(false))
@@ -295,8 +295,6 @@ impl Question {
 
 #[cfg(test)]
 mod tests {
-    use crate::{question, skill::powers::Powers};
-
     use super::*;
 
     #[test]
@@ -317,7 +315,7 @@ mod tests {
     }
 
     #[test]
-    fn build_powers_with_args() {
+    fn build_doomsday_with_args() {
         let args = [
             "--lower-boundary=1990".to_string(),
             "-u".to_string(),
