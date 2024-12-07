@@ -46,39 +46,8 @@ impl Doomsday {
             &arg_definitions,
         );
 
-        if lower_boundary > upper_boundary {
-            return Err(Self::build_err_message(Some(
-                "lower boundary must be less than or equal to upper boundary".to_string(),
-            )));
-        }
-
-        let default_lower_boundary = arg_definitions
-            .iter()
-            .find(|def| def.id() == ARG_ID_LOWER_BOUNDARY)
-            .expect("lower boundary argument definition not found")
-            .default_value()
-            .to_string();
-        let default_upper_boundary = arg_definitions
-            .iter()
-            .find(|def| def.id() == ARG_ID_UPPER_BOUNDARY)
-            .expect("upper boundary argument definition not found")
-            .default_value()
-            .to_string();
-
-        let default_boundaries = lower_boundary.to_string() == default_lower_boundary
-            && upper_boundary.to_string() == default_upper_boundary;
-
-        if lower_boundary <= GREGORIAN_CALENDAR_INTRODUCTION {
-            return Err(Self::build_err_message(Some(
-                format!("year boundary too low; Doomsday algorithm does not work for dates on {GREGORIAN_CALENDAR_INTRODUCTION} and before")
-            )));
-        }
-
-        if NaiveDate::from_ymd_opt(upper_boundary, 12, 31).is_none() {
-            return Err(Self::build_err_message(Some(
-                "year boundaries cannot exceed 262143".to_string(), // Limitation of NaiveDate
-            )));
-        }
+        let default_boundaries =
+            Self::check_boundaries(lower_boundary, upper_boundary, &arg_definitions)?;
 
         Ok(Self {
             arg_definitions,
@@ -99,15 +68,29 @@ impl Doomsday {
 
     fn additional_info() -> String {
         let mut text = String::new();
-        text.push_str("Practise doomsday algorithm (https://en.wikipedia.org/wiki/Doomsday_rule).\n");
-        text.push_str("By default, the dates range ± 100-140 years from now, with a slight chance\n");
-        text.push_str("to go beyond that. Questions are presented in a form of YYYY-MM-DD, while\n");
+        text.push_str(
+            "Practise doomsday algorithm (https://en.wikipedia.org/wiki/Doomsday_rule).\n",
+        );
+        text.push_str(
+            "By default, the dates range ± 100-140 years from now, with a slight chance\n",
+        );
+        text.push_str(
+            "to go beyond that. Questions are presented in a form of YYYY-MM-DD, while\n",
+        );
         text.push_str("answers are expected in English ('Monday', 'Mon', 'Mo') or as numbers\n");
         text.push_str("(Monday - 1, Tuesday - 2, etc).\n");
-        text.push_str("\nNote: the algorithm works only for Gregorian calendar introduced during\n");
-        text.push_str("Gregorian reform in 1582. Some countries did not adopt even until 2006, so\n");
-        text.push_str("depending on where you live, weekdays of dates between 1582 and 2006 might be\n");
-        text.push_str("off (see https://en.wikipedia.org/wiki/Gregorian_calendar#Adoption_by_country).");
+        text.push_str(
+            "\nNote: the algorithm works only for Gregorian calendar introduced during\n",
+        );
+        text.push_str(
+            "Gregorian reform in 1582. Some countries did not adopt even until 2006, so\n",
+        );
+        text.push_str(
+            "depending on where you live, weekdays of dates between 1582 and 2006 might be\n",
+        );
+        text.push_str(
+            "off (see https://en.wikipedia.org/wiki/Gregorian_calendar#Adoption_by_country).",
+        );
 
         text
     }
@@ -169,6 +152,48 @@ impl Doomsday {
         }
     }
 
+    fn check_boundaries(
+        lower_boundary: i32,
+        upper_boundary: i32,
+        arg_definitions: &Vec<Arg>,
+    ) -> Result<bool, String> {
+        if lower_boundary > upper_boundary {
+            return Err(Self::build_err_message(Some(
+                "lower boundary must be less than or equal to upper boundary".to_string(),
+            )));
+        }
+
+        let default_lower_boundary = arg_definitions
+            .iter()
+            .find(|def| def.id() == ARG_ID_LOWER_BOUNDARY)
+            .expect("lower boundary argument definition not found")
+            .default_value()
+            .to_string();
+        let default_upper_boundary = arg_definitions
+            .iter()
+            .find(|def| def.id() == ARG_ID_UPPER_BOUNDARY)
+            .expect("upper boundary argument definition not found")
+            .default_value()
+            .to_string();
+
+        let default_boundaries = lower_boundary.to_string() == default_lower_boundary
+            && upper_boundary.to_string() == default_upper_boundary;
+
+        if lower_boundary <= GREGORIAN_CALENDAR_INTRODUCTION {
+            return Err(Self::build_err_message(Some(
+                format!("year boundary too low; Doomsday algorithm does not work for dates on {GREGORIAN_CALENDAR_INTRODUCTION} and before")
+            )));
+        }
+
+        if NaiveDate::from_ymd_opt(upper_boundary, 12, 31).is_none() {
+            return Err(Self::build_err_message(Some(
+                "year boundaries cannot exceed 262143".to_string(), // Limitation of NaiveDate
+            )));
+        }
+
+        Ok(default_boundaries)
+    }
+
     fn generate_question(&self) -> Question {
         let (year_from, year_to) = self.calculate_year_range();
 
@@ -210,7 +235,12 @@ impl Base for Doomsday {
     fn get_help_text(&self) -> String {
         let definitions = &self.arg_definitions;
         let options = help::Options::new("Powers options", definitions);
-        help::build(&Self::usage(), Some(&Self::additional_info()), &options, &[])
+        help::build(
+            &Self::usage(),
+            Some(&Self::additional_info()),
+            &options,
+            &[],
+        )
     }
 }
 
