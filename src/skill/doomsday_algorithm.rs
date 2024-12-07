@@ -187,7 +187,7 @@ impl Doomsday {
 
         if NaiveDate::from_ymd_opt(upper_boundary, 12, 31).is_none() {
             return Err(Self::build_err_message(Some(
-                "year boundaries cannot exceed 262143".to_string(), // Limitation of NaiveDate
+                "year boundaries cannot exceed 262142".to_string(), // Limitation of NaiveDate
             )));
         }
 
@@ -234,7 +234,7 @@ impl Base for Doomsday {
 
     fn get_help_text(&self) -> String {
         let definitions = &self.arg_definitions;
-        let options = help::Options::new("Powers options", definitions);
+        let options = help::Options::new("Doomsday options", definitions);
         help::build(
             &Self::usage(),
             Some(&Self::additional_info()),
@@ -293,142 +293,143 @@ impl Question {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//
-//     #[test]
-//     fn build_powers_defaults() {
-//         let args = [];
-//         let powers = Powers::build(&args).expect("Should build correctly with no args");
-//         assert!(!powers.show_help);
-//         assert_eq!(powers.base, 2);
-//         assert_eq!(powers.lower_boundary, 1);
-//         assert_eq!(powers.upper_boundary, 16);
-//     }
-//
-//     #[test]
-//     #[should_panic(expected = "invalid option argument")]
-//     fn build_powers_incorrect_args() {
-//         let args = ["-b".to_string(), "hehe".to_string(), "-what".to_string()];
-//         Powers::build(&args).unwrap();
-//     }
-//
-//     #[test]
-//     fn build_powers_with_args() {
-//         let args = [
-//             "-b".to_string(),
-//             "5".to_string(),
-//             "--lower-boundary=4".to_string(),
-//             "-u".to_string(),
-//             "7".to_string(),
-//         ];
-//         let powers = Powers::build(&args).expect("Should build correctly with args");
-//         assert!(!powers.show_help);
-//         assert_eq!(powers.base, 5);
-//         assert_eq!(powers.lower_boundary, 4);
-//         assert_eq!(powers.upper_boundary, 7);
-//     }
-//
-//     #[test]
-//     #[should_panic(expected = "lower boundary must be less than or equal to upper boundary")]
-//     fn build_powers_mismatched_boundaries() {
-//         let args = [
-//             "-l".to_string(),
-//             "5".to_string(),
-//             "-u".to_string(),
-//             "4".to_string(),
-//         ];
-//         Powers::build(&args).unwrap();
-//     }
-//
-//     #[test]
-//     #[should_panic(expected = "exceeds maximum allowed value")]
-//     fn build_powers_overflow() {
-//         let args = [
-//             "-b".to_string(),
-//             "2".to_string(),
-//             "-u".to_string(),
-//             "64".to_string(),
-//         ];
-//         Powers::build(&args).unwrap();
-//     }
-//
-//     #[test]
-//     fn error_message() {
-//         let err = Some("something extraordinarily wrong happened".to_string());
-//         let message = Powers::build_err_message(err);
-//         assert!(message.contains(APP_NAME));
-//         assert!(message.contains(CMD));
-//         assert!(message.contains("something extraordinarily wrong happened"));
-//         assert!(message.contains("Usage"));
-//         assert!(message.contains("for more information"));
-//
-//         let err = None;
-//         let message = Powers::build_err_message(err);
-//         assert!(message.contains(APP_NAME));
-//         assert!(message.contains(CMD));
-//         assert!(message.contains("Usage"));
-//         assert!(message.contains("for more information"));
-//     }
-//
-//     #[test]
-//     fn max_exponent() {
-//         assert_eq!(Powers::calculate_max_exponent(2, 64), 63);
-//         assert_eq!(Powers::calculate_max_exponent(5, 40), 27);
-//         assert_eq!(Powers::calculate_max_exponent(17, 100), 15);
-//         assert_eq!(Powers::calculate_max_exponent(101, 21), 9);
-//     }
-//
-//     #[test]
-//     fn question_generation() {
-//         let args = ["-u".to_string(), "1".to_string()];
-//         let powers = Powers::build(&args).expect("Should build correctly");
-//         let question = powers.generate_question();
-//         assert_eq!(question.prompt(), "2^1");
-//         assert_eq!(question.correct_answer(), "2");
-//         assert!(question.is_answer_correct("2"));
-//     }
-//
-//     #[test]
-//     fn multiple_question_generation() {
-//         let args = ["--base=3".to_string()];
-//         let powers = Powers::build(&args).expect("Should build correctly");
-//         let questions = powers.generate_questions(10);
-//         assert_eq!(questions.len(), 10);
-//         assert!(questions
-//             .iter()
-//             .all(|question| question.prompt().starts_with("3^")));
-//     }
-//
-//     #[test]
-//     fn print_help_only() {
-//         let args = [];
-//         let powers = Powers::build(&args).expect("Should build correctly");
-//         assert!(!powers.wants_to_print_help());
-//
-//         let args = [
-//             "-b".to_string(),
-//             "4".to_string(),
-//             "-h".to_string(),
-//             "--upper-boundary=10".to_string(),
-//         ];
-//         let powers = Powers::build(&args).expect("Should build correctly");
-//         assert!(powers.wants_to_print_help());
-//     }
-//
-//     #[test]
-//     fn help_text() {
-//         let args = ["-h".to_string()];
-//         let powers = Powers::build(&args).expect("Should build correctly");
-//         let help_text = powers.get_help_text();
-//         assert!(help_text.contains("Powers options"));
-//         assert!(help_text.contains("Usage"));
-//
-//         // Ensure all flags are included
-//         assert!(help_text.contains("-h, --help"));
-//         assert!(help_text.contains("-b, --base"));
-//         assert!(help_text.contains("-l, --lower-boundary"));
-//         assert!(help_text.contains("-u, --upper-boundary"));
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use crate::{question, skill::powers::Powers};
+
+    use super::*;
+
+    #[test]
+    fn build_doomsday_defaults() {
+        let args = [];
+        let doomsday = Doomsday::build(&args).expect("Should build correctly with no args");
+        assert!(!doomsday.show_help);
+        assert_eq!(doomsday.lower_boundary, 1880);
+        assert_eq!(doomsday.upper_boundary, 2115);
+        assert!(doomsday.default_boundaries);
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid option argument")]
+    fn build_doomsday_incorrect_args() {
+        let args = ["-l".to_string(), "hehe".to_string(), "-what".to_string()];
+        Doomsday::build(&args).unwrap();
+    }
+
+    #[test]
+    fn build_powers_with_args() {
+        let args = [
+            "--lower-boundary=1990".to_string(),
+            "-u".to_string(),
+            "21142".to_string(),
+        ];
+        let doomsday = Doomsday::build(&args).expect("Should build correctly with args");
+        assert!(!doomsday.show_help);
+        assert_eq!(doomsday.lower_boundary, 1990);
+        assert_eq!(doomsday.upper_boundary, 21142);
+        assert!(!doomsday.default_boundaries);
+    }
+
+    #[test]
+    #[should_panic(expected = "lower boundary must be less than or equal to upper boundary")]
+    fn build_doomsday_mismatched_boundaries() {
+        let args = [
+            "-l".to_string(),
+            "2100".to_string(),
+            "-u".to_string(),
+            "2000".to_string(),
+        ];
+        Doomsday::build(&args).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "cannot exceed 262142")]
+    fn build_doomsday_exceeds_value() {
+        let args = ["-u".to_string(), "262143".to_string()];
+        Doomsday::build(&args).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "does not work for dates on 1582 and before")]
+    fn build_doomsday_year_too_low() {
+        let args = ["-l".to_string(), "1582".to_string()];
+        Doomsday::build(&args).unwrap();
+    }
+
+    #[test]
+    fn error_message() {
+        let err = Some("something extraordinarily wrong happened".to_string());
+        let message = Doomsday::build_err_message(err);
+        assert!(message.contains(APP_NAME));
+        assert!(message.contains(CMD));
+        assert!(message.contains("something extraordinarily wrong happened"));
+        assert!(message.contains("Usage"));
+        assert!(message.contains("for more information"));
+
+        let err = None;
+        let message = Doomsday::build_err_message(err);
+        assert!(message.contains(APP_NAME));
+        assert!(message.contains(CMD));
+        assert!(message.contains("Usage"));
+        assert!(message.contains("for more information"));
+    }
+
+    #[test]
+    fn question_generation() {
+        let args = [
+            "-l".to_string(),
+            "2000".to_string(),
+            "-u".to_string(),
+            "2000".to_string(),
+        ];
+        let doomsday = Doomsday::build(&args).expect("Should build correctly");
+        let question = doomsday.generate_question();
+        assert!(question.prompt().contains("2000-"));
+    }
+
+    #[test]
+    fn multiple_question_generation() {
+        let args = [
+            "-l".to_string(),
+            "2009".to_string(),
+            "-u".to_string(),
+            "2009".to_string(),
+        ];
+        let doomsday = Doomsday::build(&args).expect("Should build correctly");
+        let questions = doomsday.generate_questions(10);
+        assert_eq!(questions.len(), 10);
+        assert!(questions
+            .iter()
+            .all(|question| question.prompt().contains("2009")));
+    }
+
+    #[test]
+    fn print_help_only() {
+        let args = [];
+        let doomsday = Doomsday::build(&args).expect("Should build correctly");
+        assert!(!doomsday.wants_to_print_help());
+
+        let args = [
+            "-l".to_string(),
+            "2005".to_string(),
+            "-h".to_string(),
+            "--upper-boundary=2100".to_string(),
+        ];
+        let doomsday = Doomsday::build(&args).expect("Should build correctly");
+        assert!(doomsday.wants_to_print_help());
+    }
+
+    #[test]
+    fn help_text() {
+        let args = ["-h".to_string()];
+        let doomsday = Doomsday::build(&args).expect("Should build correctly");
+        let help_text = doomsday.get_help_text();
+        assert!(help_text.contains("Doomsday options"));
+        assert!(help_text.contains("Usage"));
+
+        // Ensure all flags are included
+        assert!(help_text.contains("-h, --help"));
+        assert!(help_text.contains("-l, --lower-boundary"));
+        assert!(help_text.contains("-u, --upper-boundary"));
+    }
+}
