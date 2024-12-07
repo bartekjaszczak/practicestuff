@@ -1,6 +1,11 @@
 # WIP
 
-This is a work in progress and not all functionalities may function correctly (or even be implemented).
+This is a work in progress. Basic functionality has already been implemented, but there are a few things I'm planning to do:
+
+- coloured output with --colour option to control it
+- time rush mode (as many correct answers in given time)
+- various feedback options (to replace boring "Correct" and "Incorrect" messages)
+- GitLab & GitHub CI integration
 
 # practicestuff
 
@@ -8,11 +13,37 @@ This is a work in progress and not all functionalities may function correctly (o
 
 The application should work on all platforms.
 
-List of skills:
+Current list of skills:
 
 - powers of a number
 - multiplication table (times table)
-- doomsday algorithm (not yet implemented)
+- doomsday algorithm
+
+## Installation
+
+To install the application, you need cargo. Then, run:
+
+```bash
+cargo install practicestuff
+```
+
+## Usage
+
+If you're fine with the defaults, choose a skill to practise (e.g., powers) and simply run:
+
+```bash
+practicestuff powers
+```
+
+You'll be presented with 20 questions and at the end you'll see how it went. If you don't like the defaults, you can adjust some settings. To display configuration options use help:
+
+```bash
+# General configuration options and available commands/skills
+practicestuff --help
+
+# Powers specific options
+practicestuff powers --help
+```
 
 ## Configuration options
 
@@ -35,40 +66,16 @@ Allows to practise powers. Configurable parameters include:
 
 Allows to practise multiplications. Factors' range is configurable (default: 1-10 (regular times table)).
 
-# Development
+### Doomsday algorithm
 
-## Initial assumptions
+Allows to practise calculating the day of the week for a given date. Year range is configurable. By default, the application presents questions with dates ranging from ~1900 to ~2100, with a slight chance to go beyond. When either lower or upper limit is set, the date is picked randomly with equal probability for each year.
 
-- User has to choose a mode (skill) and optionally some flags/settings
-- User is presented with a number of questions for certain skill and has to type a correct answer
-- User should be able to quit at any time
-- Some statistics should be presented (accuracy, response time, overall time)
-- There should be a help flag available
-- Argument parsing should be done without `clap` or any other library
-- There should be some options to be set:
-    - Option to set number of questions (including endless mode)
-    - Option to show current accuracy between questions (default: true). Overall accuracy is presented at the end nevertheless
-    - Option to exit early
-    - Option to change behaviour on incorrect answer: continue to next question, show correct answer and continue, repeat
-- It should be relatively easy to add new skills
-- All skills should be configurable
+# Rationale
 
-## Current TODO
+I created this simple app because I wanted to learn and practice the Doomsday algorithm. Later I thought that it might be cool not to limit the app to just one skill, but allow extensible architecture. I also didn't want to use any external libraries for argument parsing, so I implemented that myself as well.
 
-### Doomsday
 
-- help & usage prompts
-- question generation w/ options
-- tests
-
-### Improvements
-
-- coloured output (termcolor?) with --no-color option
-- additional mode (as many answers in given time)
-- multiple texts for "correct" and "incorrect" answers
-- gitlab & github CI
-
-## What's next & bug reports
+# What's next & bug reports
 
 The application in its current state suits my needs, but I'm open for proposals, either for new skills to practise or more configurability. If you feel that the app lacks something, feel free to open an issue or a PR! I'd be more than happy.
 

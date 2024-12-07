@@ -155,7 +155,7 @@ impl Doomsday {
     fn check_boundaries(
         lower_boundary: i32,
         upper_boundary: i32,
-        arg_definitions: &Vec<Arg>,
+        arg_definitions: &[Arg]
     ) -> Result<bool, String> {
         if lower_boundary > upper_boundary {
             return Err(Self::build_err_message(Some(

@@ -226,15 +226,15 @@ impl GeneralOptions {
             Arg::builder()
                 .id(ARG_ID_BEHAVIOUR_ON_ERROR)
                 .short_name('b')
-                .long_name("behaviour-on-error")
+                .long_name("behavior-on-error")
                 .description(vec![
                     "Define behaviour on incorrect answer:".to_string(),
                     "(default: showcorrect):".to_string(),
                     "  - continue: proceed to the next question.".to_string(),
-                    "  - showcorrect: proceed to the next" .to_string(),
-                    "    question and display the correct answer." .to_string(),
-                    "  - repeat: ask the question again until" .to_string(),
-                    "    the correct answer is provided." .to_string(),
+                    "  - showcorrect: proceed to the next".to_string(),
+                    "    question and display the correct answer.".to_string(),
+                    "  - repeat: ask the question again until".to_string(),
+                    "    the correct answer is provided.".to_string(),
                 ])
                 .kind(ArgKind::Value(ValueKind::OneOfStr(vec![
                     BEHAVIOUR_ON_ERROR_CONTINUE.to_string(),
@@ -325,7 +325,7 @@ mod tests {
             "command".to_string(),
             "--number-of-questions=10".to_string(),
             "--disable-live-statistics".to_string(),
-            "--behaviour-on-error=repeat".to_string(),
+            "--behavior-on-error=repeat".to_string(),
             "powers".to_string(),
         ];
         let config = Config::build(&args).expect("should build successfully");

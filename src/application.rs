@@ -6,7 +6,7 @@ use std::sync::Arc;
 use crate::args::prelude::*;
 use crate::config::{BehaviourOnError, Config, NumberOfQuestions};
 use crate::question::{Question, Generator};
-// use crate::skill::doomsday_algorithm;
+use crate::skill::doomsday_algorithm;
 use crate::skill::powers;
 use crate::skill::times_table;
 use crate::skill::Skill;
@@ -15,10 +15,10 @@ use crate::stats;
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const COMMANDS: [help::Command; 2] = [
+const COMMANDS: [help::Command; 3] = [
     help::Command::new(powers::CMD, "Practise powers (configurable base)."),
     help::Command::new(times_table::CMD, "Practise multiplication table."),
-    // help::Command::new(doomsday_algorithm::CMD, "Practise the Doomsday algorithm."),
+    help::Command::new(doomsday_algorithm::CMD, "Practise the Doomsday algorithm."),
 ];
 
 pub struct Application;
