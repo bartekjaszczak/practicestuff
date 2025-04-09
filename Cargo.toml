@@ -1,6 +1,6 @@
 [package]
 name = "practicestuff"
-version = "0.4.1"
+version = "0.4.2"
 description = "Simple CLI trainer for improving calculation and memorisation skills"
 authors = ["Bartłomiej Jaszczak"]
 repository = "https://gitlab.com/bartekjaszczak/practicestuff"

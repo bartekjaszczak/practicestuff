@@ -17,17 +17,9 @@ fn times_table_unrecognised_arg() {
 }
 
 #[test]
-fn times_table_missing_arg_value_short() {
-    let mut cmd = Command::cargo_bin(CMD).expect("crate not found");
-    cmd.args(["times_table", "-l"]).assert().failure().stderr(
-        predicate::str::contains("Usage:").and(predicate::str::contains("requires an argument")),
-    );
-}
-
-#[test]
 fn times_table_missing_arg_value_long() {
     let mut cmd = Command::cargo_bin(CMD).expect("crate not found");
-    cmd.args(["times_table", "--upper-boundary"]).assert().failure().stderr(
+    cmd.args(["times_table", "--upper-boundary-1"]).assert().failure().stderr(
         predicate::str::contains("Usage:").and(predicate::str::contains("requires an argument")),
     );
 }
@@ -48,10 +40,10 @@ fn times_table_one_question_correct_answer() {
     cmd.args([
         "--number-of-questions=1",
         "times_table",
-        "-l",
-        "7",
-        "-u",
-        "7",
+        "--lower-boundary-1=7",
+        "--upper-boundary-1=7",
+        "--lower-boundary-2=7",
+        "--upper-boundary-2=7",
     ]) // Essentially guarantees question 7*7 (=49)
     .write_stdin("49")
     .assert()
